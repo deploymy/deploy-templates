@@ -1,0 +1,37 @@
+services:
+  - name: coder
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: ghcr.io/coder/coder:${CODER_VERSION
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: postgresql://${POSTGRES_USER:-username}:${POSTGRES_PASSWORD:-password}@database/${POSTGRES_DB:-coder}?sslmode
+        value: disable
+      - key: CODER_HTTP_ADDRESS
+        value: 0.0.0.0:7080
+      - key: CODER_ACCESS_URL
+        value: ${CODER_ACCESS_URL}
+      - key: PORT
+        value: "7080"
+  - name: database
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/postgres:16
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: POSTGRES_USER
+        value: ${POSTGRES_USER:-username}
+      - key: POSTGRES_PASSWORD
+        value: ${POSTGRES_PASSWORD:-password}
+      - key: POSTGRES_DB
+        value: ${POSTGRES_DB:-coder}
+      - key: PORT
+        value: "5432"

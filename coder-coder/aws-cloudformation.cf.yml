@@ -1,0 +1,163 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deplo.my CFN template translated from Docker compose
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+  ServiceName:
+    Type: String
+    Default: DeployStackService
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['', [!Ref ServiceName, Cluster]]
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, ExecutionRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, TaskRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+  LogGroupcoder:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitioncoder]]
+  TaskDefinitioncoder:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupcoder
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitioncoder]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: coder
+          Command:
+            - ""
+          Image: ghcr.io/coder/coder:${CODER_VERSION
+          PortMappings:
+            - ContainerPort: 7080
+          Environment:
+            - name: postgresql://${POSTGRES_USER:-username}:${POSTGRES_PASSWORD:-password}@database/${POSTGRES_DB:-coder}?sslmode
+              value: disable
+            - name: CODER_HTTP_ADDRESS
+              value: 0.0.0.0:7080
+            - name: CODER_ACCESS_URL
+              value: ${CODER_ACCESS_URL}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupcoder
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupcoder:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [coder, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 7080
+          ToPort: 7080
+          CidrIp: 0.0.0.0/0
+  Servicecoder:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: coder
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitioncoder
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupcoder
+  LogGroupdatabase:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitiondatabase]]
+  TaskDefinitiondatabase:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupdatabase
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitiondatabase]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: database
+          Command:
+            - ""
+          Image: docker.io/library/postgres:16
+          PortMappings:
+            - ContainerPort: 5432
+          Environment:
+            - name: POSTGRES_USER
+              value: ${POSTGRES_USER:-username}
+            - name: POSTGRES_PASSWORD
+              value: ${POSTGRES_PASSWORD:-password}
+            - name: POSTGRES_DB
+              value: ${POSTGRES_DB:-coder}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupdatabase
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupdatabase:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [database, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+  Servicedatabase:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: database
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitiondatabase
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupdatabase
