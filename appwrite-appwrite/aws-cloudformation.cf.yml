@@ -1,0 +1,1789 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deplo.my CFN template translated from Docker compose
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+  ServiceName:
+    Type: String
+    Default: DeployStackService
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['', [!Ref ServiceName, Cluster]]
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, ExecutionRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, TaskRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+  LogGrouptraefik:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitiontraefik]]
+  TaskDefinitiontraefik:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGrouptraefik
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitiontraefik]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: traefik
+          Command:
+            - --log.level=DEBUG
+            - --api.insecure=true
+            - --providers.file.directory=/storage/config
+            - --providers.file.watch=true
+            - --providers.docker=true
+            - --providers.docker.exposedByDefault=false
+            - --providers.docker.constraints=Label(`traefik.constraint-label-stack`,`appwrite`)
+            - --entrypoints.appwrite_web.address=:80
+            - --entrypoints.appwrite_websecure.address=:443
+            - --accesslog=true
+          Image: docker.io/library/traefik:2.11
+          PortMappings:
+            - ContainerPort: 80
+            - ContainerPort: 8080
+            - ContainerPort: 443
+            - ContainerPort: 9500
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGrouptraefik
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGrouptraefik:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [traefik, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9500
+          ToPort: 9500
+          CidrIp: 0.0.0.0/0
+  Servicetraefik:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: traefik
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitiontraefik
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGrouptraefik
+  LogGroupappwrite:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionappwrite]]
+  TaskDefinitionappwrite:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings:
+            - ContainerPort: 9501
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9501
+          ToPort: 9501
+          CidrIp: 0.0.0.0/0
+  Serviceappwrite:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite
+  LogGroupappwrite-console:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionappwrite-console]]
+  TaskDefinitionappwrite-console:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-console
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-console]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-console
+          Command:
+            - ""
+          Image: docker.io/appwrite/console:5.0.12
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-console
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-console:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-console, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-console:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-console
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-console
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-console
+  LogGroupappwrite-realtime:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionappwrite-realtime]]
+  TaskDefinitionappwrite-realtime:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-realtime
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-realtime]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-realtime
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings:
+            - ContainerPort: 9505
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-realtime
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-realtime:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-realtime, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9505
+          ToPort: 9505
+          CidrIp: 0.0.0.0/0
+  Serviceappwrite-realtime:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-realtime
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-realtime
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-realtime
+  LogGroupappwrite-worker-audits:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-audits]]"
+  TaskDefinitionappwrite-worker-audits:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-audits
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-worker-audits]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-audits
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-audits
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-audits:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-audits, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-audits:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-audits
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-audits
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-audits
+  LogGroupappwrite-worker-webhooks:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-webhooks]]"
+  TaskDefinitionappwrite-worker-webhooks:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-webhooks
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-worker-webhooks]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-webhooks
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-webhooks
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-webhooks:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-webhooks, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-webhooks:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-webhooks
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-webhooks
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-webhooks
+  LogGroupappwrite-worker-deletes:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-deletes]]"
+  TaskDefinitionappwrite-worker-deletes:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-deletes
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-worker-deletes]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-deletes
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-deletes
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-deletes:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-deletes, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-deletes:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-deletes
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-deletes
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-deletes
+  LogGroupappwrite-worker-databases:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-databases]]"
+  TaskDefinitionappwrite-worker-databases:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-databases
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-worker-databases]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-databases
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-databases
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-databases:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-databases, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-databases:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-databases
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-databases
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-databases
+  LogGroupappwrite-worker-builds:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-builds]]"
+  TaskDefinitionappwrite-worker-builds:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-builds
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-worker-builds]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-builds
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-builds
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-builds:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-builds, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-builds:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-builds
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-builds
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-builds
+  LogGroupappwrite-worker-certificates:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-certificates]]"
+  TaskDefinitionappwrite-worker-certificates:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-certificates
+    Properties:
+      Family: "!Join ['', [!Ref ServiceName,
+        TaskDefinitionappwrite-worker-certificates]]"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-certificates
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-certificates
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-certificates:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-certificates, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-certificates:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-certificates
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-certificates
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-certificates
+  LogGroupappwrite-worker-functions:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-functions]]"
+  TaskDefinitionappwrite-worker-functions:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-functions
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-worker-functions]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-functions
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-functions
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-functions:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-functions, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-functions:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-functions
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-functions
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-functions
+  LogGroupappwrite-worker-mails:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-mails]]"
+  TaskDefinitionappwrite-worker-mails:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-mails
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-worker-mails]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-mails
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-mails
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-mails:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-mails, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-mails:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-mails
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-mails
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-mails
+  LogGroupappwrite-worker-messaging:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-messaging]]"
+  TaskDefinitionappwrite-worker-messaging:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-messaging
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-worker-messaging]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-messaging
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-messaging
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-messaging:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-messaging, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-messaging:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-messaging
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-messaging
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-messaging
+  LogGroupappwrite-worker-migrations:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-migrations]]"
+  TaskDefinitionappwrite-worker-migrations:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-migrations
+    Properties:
+      Family: "!Join ['', [!Ref ServiceName,
+        TaskDefinitionappwrite-worker-migrations]]"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-migrations
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-migrations
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-migrations:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-migrations, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-migrations:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-migrations
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-migrations
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-migrations
+  LogGroupappwrite-task-maintenance:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-task-maintenance]]"
+  TaskDefinitionappwrite-task-maintenance:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-task-maintenance
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-task-maintenance]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-task-maintenance
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-task-maintenance
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-task-maintenance:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-task-maintenance, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-task-maintenance:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-task-maintenance
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-task-maintenance
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-task-maintenance
+  LogGroupappwrite-worker-usage:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-usage]]"
+  TaskDefinitionappwrite-worker-usage:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-usage
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-worker-usage]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-usage
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-usage
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-usage:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-usage, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-usage:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-usage
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-usage
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-usage
+  LogGroupappwrite-worker-usage-dump:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-worker-usage-dump]]"
+  TaskDefinitionappwrite-worker-usage-dump:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-worker-usage-dump
+    Properties:
+      Family: "!Join ['', [!Ref ServiceName,
+        TaskDefinitionappwrite-worker-usage-dump]]"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-worker-usage-dump
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-worker-usage-dump
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-worker-usage-dump:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-worker-usage-dump, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-worker-usage-dump:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-worker-usage-dump
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-worker-usage-dump
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-worker-usage-dump
+  LogGroupappwrite-task-scheduler-functions:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-task-scheduler-functions]]"
+  TaskDefinitionappwrite-task-scheduler-functions:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-task-scheduler-functions
+    Properties:
+      Family: "!Join ['', [!Ref ServiceName,
+        TaskDefinitionappwrite-task-scheduler-functions]]"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-task-scheduler-functions
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-task-scheduler-functions
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-task-scheduler-functions:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-task-scheduler-functions, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-task-scheduler-functions:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-task-scheduler-functions
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-task-scheduler-functions
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-task-scheduler-functions
+  LogGroupappwrite-task-scheduler-executions:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-task-scheduler-executions]]"
+  TaskDefinitionappwrite-task-scheduler-executions:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-task-scheduler-executions
+    Properties:
+      Family: "!Join ['', [!Ref ServiceName,
+        TaskDefinitionappwrite-task-scheduler-executions]]"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-task-scheduler-executions
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-task-scheduler-executions
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-task-scheduler-executions:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "!Join ['', [appwrite-task-scheduler-executions,
+        ContainerSecurityGroup]]"
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-task-scheduler-executions:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-task-scheduler-executions
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-task-scheduler-executions
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-task-scheduler-executions
+  LogGroupappwrite-task-scheduler-messages:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionappwrite-task-scheduler-messages]]"
+  TaskDefinitionappwrite-task-scheduler-messages:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-task-scheduler-messages
+    Properties:
+      Family: "!Join ['', [!Ref ServiceName,
+        TaskDefinitionappwrite-task-scheduler-messages]]"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-task-scheduler-messages
+          Command:
+            - ""
+          Image: docker.io/library/appwrite-dev:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-task-scheduler-messages
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-task-scheduler-messages:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-task-scheduler-messages, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-task-scheduler-messages:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-task-scheduler-messages
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-task-scheduler-messages
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-task-scheduler-messages
+  LogGroupappwrite-assistant:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionappwrite-assistant]]
+  TaskDefinitionappwrite-assistant:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupappwrite-assistant
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionappwrite-assistant]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: appwrite-assistant
+          Command:
+            - ""
+          Image: docker.io/appwrite/assistant:0.4.0
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupappwrite-assistant
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupappwrite-assistant:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [appwrite-assistant, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceappwrite-assistant:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: appwrite-assistant
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionappwrite-assistant
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupappwrite-assistant
+  LogGroupopenruntimes-executor:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "!Join ['', [/ecs/, !Ref ServiceName,
+        TaskDefinitionopenruntimes-executor]]"
+  TaskDefinitionopenruntimes-executor:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupopenruntimes-executor
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionopenruntimes-executor]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: openruntimes-executor
+          Command:
+            - ""
+          Image: docker.io/openruntimes/executor:0.6.11
+          PortMappings: []
+          Environment:
+            - name: OPR_EXECUTOR_INACTIVE_TRESHOLD
+              value: $_APP_FUNCTIONS_INACTIVE_THRESHOLD
+            - name: OPR_EXECUTOR_MAINTENANCE_INTERVAL
+              value: $_APP_FUNCTIONS_MAINTENANCE_INTERVAL
+            - name: OPR_EXECUTOR_NETWORK
+              value: $_APP_FUNCTIONS_RUNTIMES_NETWORK
+            - name: OPR_EXECUTOR_DOCKER_HUB_USERNAME
+              value: $_APP_DOCKER_HUB_USERNAME
+            - name: OPR_EXECUTOR_DOCKER_HUB_PASSWORD
+              value: $_APP_DOCKER_HUB_PASSWORD
+            - name: OPR_EXECUTOR_ENV
+              value: $_APP_ENV
+            - name: OPR_EXECUTOR_RUNTIMES
+              value: $_APP_FUNCTIONS_RUNTIMES
+            - name: OPR_EXECUTOR_SECRET
+              value: $_APP_EXECUTOR_SECRET
+            - name: OPR_EXECUTOR_RUNTIME_VERSIONS
+              value: v2,v4
+            - name: OPR_EXECUTOR_LOGGING_CONFIG
+              value: $_APP_LOGGING_CONFIG
+            - name: OPR_EXECUTOR_STORAGE_DEVICE
+              value: $_APP_STORAGE_DEVICE
+            - name: OPR_EXECUTOR_STORAGE_S3_ACCESS_KEY
+              value: $_APP_STORAGE_S3_ACCESS_KEY
+            - name: OPR_EXECUTOR_STORAGE_S3_SECRET
+              value: $_APP_STORAGE_S3_SECRET
+            - name: OPR_EXECUTOR_STORAGE_S3_REGION
+              value: $_APP_STORAGE_S3_REGION
+            - name: OPR_EXECUTOR_STORAGE_S3_BUCKET
+              value: $_APP_STORAGE_S3_BUCKET
+            - name: OPR_EXECUTOR_STORAGE_DO_SPACES_ACCESS_KEY
+              value: $_APP_STORAGE_DO_SPACES_ACCESS_KEY
+            - name: OPR_EXECUTOR_STORAGE_DO_SPACES_SECRET
+              value: $_APP_STORAGE_DO_SPACES_SECRET
+            - name: OPR_EXECUTOR_STORAGE_DO_SPACES_REGION
+              value: $_APP_STORAGE_DO_SPACES_REGION
+            - name: OPR_EXECUTOR_STORAGE_DO_SPACES_BUCKET
+              value: $_APP_STORAGE_DO_SPACES_BUCKET
+            - name: OPR_EXECUTOR_STORAGE_BACKBLAZE_ACCESS_KEY
+              value: $_APP_STORAGE_BACKBLAZE_ACCESS_KEY
+            - name: OPR_EXECUTOR_STORAGE_BACKBLAZE_SECRET
+              value: $_APP_STORAGE_BACKBLAZE_SECRET
+            - name: OPR_EXECUTOR_STORAGE_BACKBLAZE_REGION
+              value: $_APP_STORAGE_BACKBLAZE_REGION
+            - name: OPR_EXECUTOR_STORAGE_BACKBLAZE_BUCKET
+              value: $_APP_STORAGE_BACKBLAZE_BUCKET
+            - name: OPR_EXECUTOR_STORAGE_LINODE_ACCESS_KEY
+              value: $_APP_STORAGE_LINODE_ACCESS_KEY
+            - name: OPR_EXECUTOR_STORAGE_LINODE_SECRET
+              value: $_APP_STORAGE_LINODE_SECRET
+            - name: OPR_EXECUTOR_STORAGE_LINODE_REGION
+              value: $_APP_STORAGE_LINODE_REGION
+            - name: OPR_EXECUTOR_STORAGE_LINODE_BUCKET
+              value: $_APP_STORAGE_LINODE_BUCKET
+            - name: OPR_EXECUTOR_STORAGE_WASABI_ACCESS_KEY
+              value: $_APP_STORAGE_WASABI_ACCESS_KEY
+            - name: OPR_EXECUTOR_STORAGE_WASABI_SECRET
+              value: $_APP_STORAGE_WASABI_SECRET
+            - name: OPR_EXECUTOR_STORAGE_WASABI_REGION
+              value: $_APP_STORAGE_WASABI_REGION
+            - name: OPR_EXECUTOR_STORAGE_WASABI_BUCKET
+              value: $_APP_STORAGE_WASABI_BUCKET
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupopenruntimes-executor
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupopenruntimes-executor:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [openruntimes-executor, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceopenruntimes-executor:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: openruntimes-executor
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionopenruntimes-executor
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupopenruntimes-executor
+  LogGroupopenruntimes-proxy:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionopenruntimes-proxy]]
+  TaskDefinitionopenruntimes-proxy:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupopenruntimes-proxy
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionopenruntimes-proxy]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: openruntimes-proxy
+          Command:
+            - ""
+          Image: docker.io/openruntimes/proxy:0.5.5
+          PortMappings: []
+          Environment:
+            - name: OPR_PROXY_WORKER_PER_CORE
+              value: $_APP_WORKER_PER_CORE
+            - name: OPR_PROXY_ENV
+              value: $_APP_ENV
+            - name: OPR_PROXY_EXECUTOR_SECRET
+              value: $_APP_EXECUTOR_SECRET
+            - name: OPR_PROXY_SECRET
+              value: $_APP_EXECUTOR_SECRET
+            - name: OPR_PROXY_LOGGING_CONFIG
+              value: $_APP_LOGGING_CONFIG
+            - name: OPR_PROXY_ALGORITHM
+              value: random
+            - name: OPR_PROXY_EXECUTORS
+              value: exc1
+            - name: OPR_PROXY_HEALTHCHECK_INTERVAL
+              value: "10000"
+            - name: OPR_PROXY_MAX_TIMEOUT
+              value: "600"
+            - name: OPR_PROXY_HEALTHCHECK
+              value: enabled
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupopenruntimes-proxy
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupopenruntimes-proxy:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [openruntimes-proxy, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceopenruntimes-proxy:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: openruntimes-proxy
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionopenruntimes-proxy
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupopenruntimes-proxy
+  LogGroupmariadb:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionmariadb]]
+  TaskDefinitionmariadb:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupmariadb
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionmariadb]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: mariadb
+          Command:
+            - mysqld
+            - --innodb-flush-method=fsync
+          Image: docker.io/library/mariadb:10.11
+          PortMappings:
+            - ContainerPort: 3306
+          Environment:
+            - name: MYSQL_ROOT_PASSWORD
+              value: ${_APP_DB_ROOT_PASS}
+            - name: MYSQL_DATABASE
+              value: ${_APP_DB_SCHEMA}
+            - name: MYSQL_USER
+              value: ${_APP_DB_USER}
+            - name: MYSQL_PASSWORD
+              value: ${_APP_DB_PASS}
+            - name: MARIADB_AUTO_UPGRADE
+              value: "1"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupmariadb
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupmariadb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [mariadb, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+  Servicemariadb:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: mariadb
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionmariadb
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupmariadb
+  LogGroupredis:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionredis]]
+  TaskDefinitionredis:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupredis
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionredis]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: redis
+          Command:
+            - redis-server
+            - --maxmemory
+            - ""
+            - ""
+            - ""
+            - ""
+            - ""
+            - ""
+            - ""
+            - ""
+            - ""
+            - ""
+            - ""
+            - 512mb
+            - --maxmemory-policy
+            - ""
+            - ""
+            - ""
+            - ""
+            - allkeys-lru
+            - --maxmemory-samples
+            - ""
+            - ""
+            - ""
+            - |
+              5
+          Image: docker.io/library/redis:7.2.4-alpine
+          PortMappings:
+            - ContainerPort: 6379
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupredis
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupredis:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [redis, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 0.0.0.0/0
+  Serviceredis:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: redis
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionredis
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupredis
+  LogGroupmaildev:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionmaildev]]
+  TaskDefinitionmaildev:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupmaildev
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionmaildev]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: maildev
+          Command:
+            - ""
+          Image: docker.io/appwrite/mailcatcher:1.0.0
+          PortMappings:
+            - ContainerPort: 9503
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupmaildev
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupmaildev:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [maildev, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9503
+          ToPort: 9503
+          CidrIp: 0.0.0.0/0
+  Servicemaildev:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: maildev
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionmaildev
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupmaildev
+  LogGrouprequest-catcher:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionrequest-catcher]]
+  TaskDefinitionrequest-catcher:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGrouprequest-catcher
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionrequest-catcher]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: request-catcher
+          Command:
+            - ""
+          Image: docker.io/appwrite/requestcatcher:1.0.0
+          PortMappings:
+            - ContainerPort: 9504
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGrouprequest-catcher
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGrouprequest-catcher:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [request-catcher, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9504
+          ToPort: 9504
+          CidrIp: 0.0.0.0/0
+  Servicerequest-catcher:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: request-catcher
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionrequest-catcher
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGrouprequest-catcher
+  LogGroupadminer:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionadminer]]
+  TaskDefinitionadminer:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupadminer
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionadminer]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: adminer
+          Command:
+            - ""
+          Image: docker.io/library/adminer:latest
+          PortMappings:
+            - ContainerPort: 9506
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupadminer
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupadminer:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [adminer, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9506
+          ToPort: 9506
+          CidrIp: 0.0.0.0/0
+  Serviceadminer:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: adminer
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionadminer
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupadminer
+  LogGroupredis-insight:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionredis-insight]]
+  TaskDefinitionredis-insight:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupredis-insight
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionredis-insight]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: redis-insight
+          Command:
+            - ""
+          Image: docker.io/redis/redisinsight:latest
+          PortMappings:
+            - ContainerPort: 8081
+          Environment:
+            - name: REDIS_HOSTS
+              value: redis
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupredis-insight
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupredis-insight:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [redis-insight, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8081
+          ToPort: 8081
+          CidrIp: 0.0.0.0/0
+  Serviceredis-insight:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: redis-insight
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionredis-insight
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupredis-insight
+  LogGroupgraphql-explorer:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitiongraphql-explorer]]
+  TaskDefinitiongraphql-explorer:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupgraphql-explorer
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitiongraphql-explorer]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: graphql-explorer
+          Command:
+            - ""
+          Image: docker.io/appwrite/altair:0.3.0
+          PortMappings:
+            - ContainerPort: 9509
+          Environment:
+            - name: SERVER_URL
+              value: http://localhost/v1/graphql
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupgraphql-explorer
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupgraphql-explorer:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [graphql-explorer, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9509
+          ToPort: 9509
+          CidrIp: 0.0.0.0/0
+  Servicegraphql-explorer:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: graphql-explorer
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitiongraphql-explorer
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupgraphql-explorer

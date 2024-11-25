@@ -1,0 +1,447 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: traefik
+      image:
+        registry_type: DOCKER_HUB
+        repository: traefik
+        tag: "2.11"
+      http_port: 80
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: --log.level=DEBUG --api.insecure=true
+        --providers.file.directory=/storage/config --providers.file.watch=true
+        --providers.docker=true --providers.docker.exposedByDefault=false
+        --providers.docker.constraints=Label(`traefik.constraint-label-stack`,`appwrite`)
+        --entrypoints.appwrite_web.address=:80
+        --entrypoints.appwrite_websecure.address=:443 --accesslog=true
+      envs: []
+      routes:
+        - path: /
+    - name: appwrite
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      http_port: 9501
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite
+    - name: appwrite-console
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite/console
+        tag: 5.0.12
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-console
+    - name: appwrite-realtime
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      http_port: 9505
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-realtime
+    - name: appwrite-worker-audits
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-audits
+    - name: appwrite-worker-webhooks
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-webhooks
+    - name: appwrite-worker-deletes
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-deletes
+    - name: appwrite-worker-databases
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-databases
+    - name: appwrite-worker-builds
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-builds
+    - name: appwrite-worker-certificates
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-certificates
+    - name: appwrite-worker-functions
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-functions
+    - name: appwrite-worker-mails
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-mails
+    - name: appwrite-worker-messaging
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-messaging
+    - name: appwrite-worker-migrations
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-migrations
+    - name: appwrite-task-maintenance
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-task-maintenance
+    - name: appwrite-worker-usage
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-usage
+    - name: appwrite-worker-usage-dump
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-worker-usage-dump
+    - name: appwrite-task-scheduler-functions
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-task-scheduler-functions
+    - name: appwrite-task-scheduler-executions
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-task-scheduler-executions
+    - name: appwrite-task-scheduler-messages
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite-dev
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-task-scheduler-messages
+    - name: appwrite-assistant
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite/assistant
+        tag: 0.4.0
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /appwrite-assistant
+    - name: openruntimes-executor
+      image:
+        registry_type: DOCKER_HUB
+        repository: openruntimes/executor
+        tag: 0.6.11
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: OPR_EXECUTOR_INACTIVE_TRESHOLD
+          value: $_APP_FUNCTIONS_INACTIVE_THRESHOLD
+        - key: OPR_EXECUTOR_MAINTENANCE_INTERVAL
+          value: $_APP_FUNCTIONS_MAINTENANCE_INTERVAL
+        - key: OPR_EXECUTOR_NETWORK
+          value: $_APP_FUNCTIONS_RUNTIMES_NETWORK
+        - key: OPR_EXECUTOR_DOCKER_HUB_USERNAME
+          value: $_APP_DOCKER_HUB_USERNAME
+        - key: OPR_EXECUTOR_DOCKER_HUB_PASSWORD
+          value: $_APP_DOCKER_HUB_PASSWORD
+        - key: OPR_EXECUTOR_ENV
+          value: $_APP_ENV
+        - key: OPR_EXECUTOR_RUNTIMES
+          value: $_APP_FUNCTIONS_RUNTIMES
+        - key: OPR_EXECUTOR_SECRET
+          value: $_APP_EXECUTOR_SECRET
+        - key: OPR_EXECUTOR_RUNTIME_VERSIONS
+          value: v2,v4
+        - key: OPR_EXECUTOR_LOGGING_CONFIG
+          value: $_APP_LOGGING_CONFIG
+        - key: OPR_EXECUTOR_STORAGE_DEVICE
+          value: $_APP_STORAGE_DEVICE
+        - key: OPR_EXECUTOR_STORAGE_S3_ACCESS_KEY
+          value: $_APP_STORAGE_S3_ACCESS_KEY
+        - key: OPR_EXECUTOR_STORAGE_S3_SECRET
+          value: $_APP_STORAGE_S3_SECRET
+        - key: OPR_EXECUTOR_STORAGE_S3_REGION
+          value: $_APP_STORAGE_S3_REGION
+        - key: OPR_EXECUTOR_STORAGE_S3_BUCKET
+          value: $_APP_STORAGE_S3_BUCKET
+        - key: OPR_EXECUTOR_STORAGE_DO_SPACES_ACCESS_KEY
+          value: $_APP_STORAGE_DO_SPACES_ACCESS_KEY
+        - key: OPR_EXECUTOR_STORAGE_DO_SPACES_SECRET
+          value: $_APP_STORAGE_DO_SPACES_SECRET
+        - key: OPR_EXECUTOR_STORAGE_DO_SPACES_REGION
+          value: $_APP_STORAGE_DO_SPACES_REGION
+        - key: OPR_EXECUTOR_STORAGE_DO_SPACES_BUCKET
+          value: $_APP_STORAGE_DO_SPACES_BUCKET
+        - key: OPR_EXECUTOR_STORAGE_BACKBLAZE_ACCESS_KEY
+          value: $_APP_STORAGE_BACKBLAZE_ACCESS_KEY
+        - key: OPR_EXECUTOR_STORAGE_BACKBLAZE_SECRET
+          value: $_APP_STORAGE_BACKBLAZE_SECRET
+        - key: OPR_EXECUTOR_STORAGE_BACKBLAZE_REGION
+          value: $_APP_STORAGE_BACKBLAZE_REGION
+        - key: OPR_EXECUTOR_STORAGE_BACKBLAZE_BUCKET
+          value: $_APP_STORAGE_BACKBLAZE_BUCKET
+        - key: OPR_EXECUTOR_STORAGE_LINODE_ACCESS_KEY
+          value: $_APP_STORAGE_LINODE_ACCESS_KEY
+        - key: OPR_EXECUTOR_STORAGE_LINODE_SECRET
+          value: $_APP_STORAGE_LINODE_SECRET
+        - key: OPR_EXECUTOR_STORAGE_LINODE_REGION
+          value: $_APP_STORAGE_LINODE_REGION
+        - key: OPR_EXECUTOR_STORAGE_LINODE_BUCKET
+          value: $_APP_STORAGE_LINODE_BUCKET
+        - key: OPR_EXECUTOR_STORAGE_WASABI_ACCESS_KEY
+          value: $_APP_STORAGE_WASABI_ACCESS_KEY
+        - key: OPR_EXECUTOR_STORAGE_WASABI_SECRET
+          value: $_APP_STORAGE_WASABI_SECRET
+        - key: OPR_EXECUTOR_STORAGE_WASABI_REGION
+          value: $_APP_STORAGE_WASABI_REGION
+        - key: OPR_EXECUTOR_STORAGE_WASABI_BUCKET
+          value: $_APP_STORAGE_WASABI_BUCKET
+      routes:
+        - path: /openruntimes-executor
+    - name: openruntimes-proxy
+      image:
+        registry_type: DOCKER_HUB
+        repository: openruntimes/proxy
+        tag: 0.5.5
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: OPR_PROXY_WORKER_PER_CORE
+          value: $_APP_WORKER_PER_CORE
+        - key: OPR_PROXY_ENV
+          value: $_APP_ENV
+        - key: OPR_PROXY_EXECUTOR_SECRET
+          value: $_APP_EXECUTOR_SECRET
+        - key: OPR_PROXY_SECRET
+          value: $_APP_EXECUTOR_SECRET
+        - key: OPR_PROXY_LOGGING_CONFIG
+          value: $_APP_LOGGING_CONFIG
+        - key: OPR_PROXY_ALGORITHM
+          value: random
+        - key: OPR_PROXY_EXECUTORS
+          value: exc1
+        - key: OPR_PROXY_HEALTHCHECK_INTERVAL
+          value: "10000"
+        - key: OPR_PROXY_MAX_TIMEOUT
+          value: "600"
+        - key: OPR_PROXY_HEALTHCHECK
+          value: enabled
+      routes:
+        - path: /openruntimes-proxy
+    - name: mariadb
+      image:
+        registry_type: DOCKER_HUB
+        repository: mariadb
+        tag: "10.11"
+      http_port: 3306
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: mysqld --innodb-flush-method=fsync
+      envs:
+        - key: MYSQL_ROOT_PASSWORD
+          value: ${_APP_DB_ROOT_PASS}
+        - key: MYSQL_DATABASE
+          value: ${_APP_DB_SCHEMA}
+        - key: MYSQL_USER
+          value: ${_APP_DB_USER}
+        - key: MYSQL_PASSWORD
+          value: ${_APP_DB_PASS}
+        - key: MARIADB_AUTO_UPGRADE
+          value: "1"
+      routes:
+        - path: /mariadb
+    - name: redis
+      image:
+        registry_type: DOCKER_HUB
+        repository: redis
+        tag: 7.2.4-alpine
+      http_port: 6379
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: >
+        redis-server --maxmemory            512mb
+        --maxmemory-policy     allkeys-lru --maxmemory-samples    5
+      envs: []
+      routes:
+        - path: /redis
+    - name: maildev
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite/mailcatcher
+        tag: 1.0.0
+      http_port: 9503
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /maildev
+    - name: request-catcher
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite/requestcatcher
+        tag: 1.0.0
+      http_port: 9504
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /request-catcher
+    - name: adminer
+      image:
+        registry_type: DOCKER_HUB
+        repository: adminer
+        tag: latest
+      http_port: 9506
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /adminer
+    - name: redis-insight
+      image:
+        registry_type: DOCKER_HUB
+        repository: redis/redisinsight
+        tag: latest
+      http_port: 8081
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: REDIS_HOSTS
+          value: redis
+      routes:
+        - path: /redis-insight
+    - name: graphql-explorer
+      image:
+        registry_type: DOCKER_HUB
+        repository: appwrite/altair
+        tag: 0.3.0
+      http_port: 9509
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: SERVER_URL
+          value: http://localhost/v1/graphql
+      routes:
+        - path: /graphql-explorer

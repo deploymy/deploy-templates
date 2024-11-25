@@ -1,0 +1,424 @@
+services:
+  - name: traefik
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/traefik:2.11
+    startCommand: --log.level=DEBUG --api.insecure=true
+      --providers.file.directory=/storage/config --providers.file.watch=true
+      --providers.docker=true --providers.docker.exposedByDefault=false
+      --providers.docker.constraints=Label(`traefik.constraint-label-stack`,`appwrite`)
+      --entrypoints.appwrite_web.address=:80
+      --entrypoints.appwrite_websecure.address=:443 --accesslog=true
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "80"
+  - name: appwrite
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "9501"
+  - name: appwrite-console
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/appwrite/console:5.0.12
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-realtime
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "9505"
+  - name: appwrite-worker-audits
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-webhooks
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-deletes
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-databases
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-builds
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-certificates
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-functions
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-mails
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-messaging
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-migrations
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-task-maintenance
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-usage
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-worker-usage-dump
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-task-scheduler-functions
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-task-scheduler-executions
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-task-scheduler-messages
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/appwrite-dev:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: appwrite-assistant
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/appwrite/assistant:0.4.0
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars: []
+  - name: openruntimes-executor
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/openruntimes/executor:0.6.11
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: OPR_EXECUTOR_INACTIVE_TRESHOLD
+        value: $_APP_FUNCTIONS_INACTIVE_THRESHOLD
+      - key: OPR_EXECUTOR_MAINTENANCE_INTERVAL
+        value: $_APP_FUNCTIONS_MAINTENANCE_INTERVAL
+      - key: OPR_EXECUTOR_NETWORK
+        value: $_APP_FUNCTIONS_RUNTIMES_NETWORK
+      - key: OPR_EXECUTOR_DOCKER_HUB_USERNAME
+        value: $_APP_DOCKER_HUB_USERNAME
+      - key: OPR_EXECUTOR_DOCKER_HUB_PASSWORD
+        value: $_APP_DOCKER_HUB_PASSWORD
+      - key: OPR_EXECUTOR_ENV
+        value: $_APP_ENV
+      - key: OPR_EXECUTOR_RUNTIMES
+        value: $_APP_FUNCTIONS_RUNTIMES
+      - key: OPR_EXECUTOR_SECRET
+        value: $_APP_EXECUTOR_SECRET
+      - key: OPR_EXECUTOR_RUNTIME_VERSIONS
+        value: v2,v4
+      - key: OPR_EXECUTOR_LOGGING_CONFIG
+        value: $_APP_LOGGING_CONFIG
+      - key: OPR_EXECUTOR_STORAGE_DEVICE
+        value: $_APP_STORAGE_DEVICE
+      - key: OPR_EXECUTOR_STORAGE_S3_ACCESS_KEY
+        value: $_APP_STORAGE_S3_ACCESS_KEY
+      - key: OPR_EXECUTOR_STORAGE_S3_SECRET
+        value: $_APP_STORAGE_S3_SECRET
+      - key: OPR_EXECUTOR_STORAGE_S3_REGION
+        value: $_APP_STORAGE_S3_REGION
+      - key: OPR_EXECUTOR_STORAGE_S3_BUCKET
+        value: $_APP_STORAGE_S3_BUCKET
+      - key: OPR_EXECUTOR_STORAGE_DO_SPACES_ACCESS_KEY
+        value: $_APP_STORAGE_DO_SPACES_ACCESS_KEY
+      - key: OPR_EXECUTOR_STORAGE_DO_SPACES_SECRET
+        value: $_APP_STORAGE_DO_SPACES_SECRET
+      - key: OPR_EXECUTOR_STORAGE_DO_SPACES_REGION
+        value: $_APP_STORAGE_DO_SPACES_REGION
+      - key: OPR_EXECUTOR_STORAGE_DO_SPACES_BUCKET
+        value: $_APP_STORAGE_DO_SPACES_BUCKET
+      - key: OPR_EXECUTOR_STORAGE_BACKBLAZE_ACCESS_KEY
+        value: $_APP_STORAGE_BACKBLAZE_ACCESS_KEY
+      - key: OPR_EXECUTOR_STORAGE_BACKBLAZE_SECRET
+        value: $_APP_STORAGE_BACKBLAZE_SECRET
+      - key: OPR_EXECUTOR_STORAGE_BACKBLAZE_REGION
+        value: $_APP_STORAGE_BACKBLAZE_REGION
+      - key: OPR_EXECUTOR_STORAGE_BACKBLAZE_BUCKET
+        value: $_APP_STORAGE_BACKBLAZE_BUCKET
+      - key: OPR_EXECUTOR_STORAGE_LINODE_ACCESS_KEY
+        value: $_APP_STORAGE_LINODE_ACCESS_KEY
+      - key: OPR_EXECUTOR_STORAGE_LINODE_SECRET
+        value: $_APP_STORAGE_LINODE_SECRET
+      - key: OPR_EXECUTOR_STORAGE_LINODE_REGION
+        value: $_APP_STORAGE_LINODE_REGION
+      - key: OPR_EXECUTOR_STORAGE_LINODE_BUCKET
+        value: $_APP_STORAGE_LINODE_BUCKET
+      - key: OPR_EXECUTOR_STORAGE_WASABI_ACCESS_KEY
+        value: $_APP_STORAGE_WASABI_ACCESS_KEY
+      - key: OPR_EXECUTOR_STORAGE_WASABI_SECRET
+        value: $_APP_STORAGE_WASABI_SECRET
+      - key: OPR_EXECUTOR_STORAGE_WASABI_REGION
+        value: $_APP_STORAGE_WASABI_REGION
+      - key: OPR_EXECUTOR_STORAGE_WASABI_BUCKET
+        value: $_APP_STORAGE_WASABI_BUCKET
+  - name: openruntimes-proxy
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/openruntimes/proxy:0.5.5
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: OPR_PROXY_WORKER_PER_CORE
+        value: $_APP_WORKER_PER_CORE
+      - key: OPR_PROXY_ENV
+        value: $_APP_ENV
+      - key: OPR_PROXY_EXECUTOR_SECRET
+        value: $_APP_EXECUTOR_SECRET
+      - key: OPR_PROXY_SECRET
+        value: $_APP_EXECUTOR_SECRET
+      - key: OPR_PROXY_LOGGING_CONFIG
+        value: $_APP_LOGGING_CONFIG
+      - key: OPR_PROXY_ALGORITHM
+        value: random
+      - key: OPR_PROXY_EXECUTORS
+        value: exc1
+      - key: OPR_PROXY_HEALTHCHECK_INTERVAL
+        value: "10000"
+      - key: OPR_PROXY_MAX_TIMEOUT
+        value: "600"
+      - key: OPR_PROXY_HEALTHCHECK
+        value: enabled
+  - name: mariadb
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/mariadb:10.11
+    startCommand: mysqld --innodb-flush-method=fsync
+    plan: free
+    region: oregon
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        value: ${_APP_DB_ROOT_PASS}
+      - key: MYSQL_DATABASE
+        value: ${_APP_DB_SCHEMA}
+      - key: MYSQL_USER
+        value: ${_APP_DB_USER}
+      - key: MYSQL_PASSWORD
+        value: ${_APP_DB_PASS}
+      - key: MARIADB_AUTO_UPGRADE
+        value: "1"
+      - key: PORT
+        value: "3306"
+  - name: redis
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/redis:7.2.4-alpine
+    startCommand: >
+      redis-server --maxmemory            512mb
+      --maxmemory-policy     allkeys-lru --maxmemory-samples    5
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "6379"
+  - name: maildev
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/appwrite/mailcatcher:1.0.0
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "9503"
+  - name: request-catcher
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/appwrite/requestcatcher:1.0.0
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "9504"
+  - name: adminer
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/adminer:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "9506"
+  - name: redis-insight
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/redis/redisinsight:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: REDIS_HOSTS
+        value: redis
+      - key: PORT
+        value: "8081"
+  - name: graphql-explorer
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/appwrite/altair:0.3.0
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: SERVER_URL
+        value: http://localhost/v1/graphql
+      - key: PORT
+        value: "9509"
