@@ -15,7 +15,7 @@ You can explore all available application templates in two ways:
 ## ⚡ How It Works
 
 1. **Source**: Each template starts from a `docker-compose.yml` file in a public repository
-2. **Generation**: Our [docker-to-iac](https://github.com/deploystack/docker-to-iac) module transforms it into cloud-specific templates
+2. **Generation**: Our [docker-to-iac](https://github.com/deploystackio/docker-to-iac) module transforms it into cloud-specific templates
 3. **Deployment**: Use our one-click deploy buttons to launch on your preferred cloud provider
 
 ## 🏗️ Supported Cloud Providers
@@ -39,14 +39,14 @@ Templates are automatically updated when:
 ## 💬 Need Help?
 
 - 📚 Check our [Documentation](https://docs.deploystack.io)
-- 🎯 Report issues on [GitHub](https://github.com/deploystack/docker-to-iac/issues)
+- 🎯 Report issues on [GitHub](https://github.com/deploystackio/docker-to-iac/issues)
 - 📧 Use Discord to chat with us at [https://discord.gg/UjFWwByB](https://discord.gg/UjFWwByB)
 
 ## ⚠️ Important Links
 
 - 🌐 [DeployStack.io](https://deploystack.io)
 - 📑 [Template Catalog](https://deploystack.io/c)
-- 🛠️ [docker-to-iac Module](https://github.com/deploystack/docker-to-iac)
+- 🛠️ [docker-to-iac Module](https://github.com/deploystackio/docker-to-iac)
 
 ---
 
