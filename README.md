@@ -45,7 +45,7 @@ These templates are automatically updated when changes are detected in the sourc
 
 ## 💬 Need Help?
 
-- 📚 Visit our [Documentation](https://docs.deploystack.io)
+- 📚 Visit our [Documentation](https://deploystack.io/docs)
 - 🎯 Report issues with generated templates on [GitHub](https://github.com/deploystackio/docker-to-iac/issues)
 - 📧 Use Discord to chat with us at [https://discord.gg/UjFWwByB](https://discord.gg/UjFWwByB)
 
