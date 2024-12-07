@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deplo.my CFN template translated from Docker compose
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+  ServiceName:
+    Type: String
+    Default: DeployStackService
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['', [!Ref ServiceName, Cluster]]
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, ExecutionRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, TaskRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+  LogGroupdailytxt:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitiondailytxt]]
+  TaskDefinitiondailytxt:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupdailytxt
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitiondailytxt]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: dailytxt
+          Command:
+            - ""
+          Image: docker.io/phitux/dailytxt:latest
+          PortMappings:
+            - ContainerPort: 127
+          Environment:
+            - name: PORT
+              value: "8765"
+            - name: SECRET_KEY
+              value: <openssl rand -base64 32>
+            - name: ALLOW_REGISTRATION
+              value: "True"
+            - name: DATA_INDENT
+              value: "2"
+            - name: JWT_EXP_DAYS
+              value: "60"
+            - name: ENABLE_UPDATE_CHECK
+              value: "True"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupdailytxt
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupdailytxt:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [dailytxt, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 127
+          ToPort: 127
+          CidrIp: 0.0.0.0/0
+  Servicedailytxt:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: dailytxt
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitiondailytxt
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupdailytxt
