@@ -1,0 +1,23 @@
+services:
+  - name: dailytxt
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/phitux/dailytxt:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "127"
+      - key: SECRET_KEY
+        value: <openssl rand -base64 32>
+      - key: ALLOW_REGISTRATION
+        value: "True"
+      - key: DATA_INDENT
+        value: "2"
+      - key: JWT_EXP_DAYS
+        value: "60"
+      - key: ENABLE_UPDATE_CHECK
+        value: "True"

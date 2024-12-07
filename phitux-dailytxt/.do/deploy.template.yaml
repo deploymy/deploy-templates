@@ -1,0 +1,28 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: dailytxt
+      image:
+        registry_type: DOCKER_HUB
+        repository: phitux/dailytxt
+        tag: latest
+      http_port: 127
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: PORT
+          value: "8765"
+        - key: SECRET_KEY
+          value: <openssl rand -base64 32>
+        - key: ALLOW_REGISTRATION
+          value: "True"
+        - key: DATA_INDENT
+          value: "2"
+        - key: JWT_EXP_DAYS
+          value: "60"
+        - key: ENABLE_UPDATE_CHECK
+          value: "True"
+      routes:
+        - path: /
