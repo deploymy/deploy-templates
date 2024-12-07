@@ -1,0 +1,514 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deplo.my CFN template translated from Docker compose
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+  ServiceName:
+    Type: String
+    Default: DeployStackService
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['', [!Ref ServiceName, Cluster]]
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, ExecutionRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, TaskRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+  LogGroupssh:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionssh]]
+  TaskDefinitionssh:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupssh
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionssh]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: ssh
+          Command:
+            - ""
+          Image: docker.io/shellhubio/ssh:${SHELLHUB_VERSION}
+          PortMappings:
+            - ContainerPort: 2222
+          Environment:
+            - name: PRIVATE_KEY
+              value: /run/secrets/ssh_private_key
+            - name: SHELLHUB_ENTERPRISE
+              value: ${SHELLHUB_ENTERPRISE}
+            - name: SHELLHUB_CLOUD
+              value: ${SHELLHUB_CLOUD}
+            - name: SHELLHUB_LOG_LEVEL
+              value: ${SHELLHUB_LOG_LEVEL}
+            - name: SHELLHUB_LOG_FORMAT
+              value: ${SHELLHUB_LOG_FORMAT}
+            - name: SHELLHUB_BILLING
+              value: ${SHELLHUB_BILLING}
+            - name: ALLOW_PUBLIC_KEY_ACCESS_BELLOW_0_6_0
+              value: ${SHELLHUB_ALLOW_PUBLIC_KEY_ACCESS_BELLOW_0_6_0}
+            - name: RECORD_URL
+              value: ${SHELLHUB_RECORD_URL}
+            - name: BILLING_URL
+              value: ${SHELLHUB_BILLING_URL}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupssh
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupssh:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [ssh, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2222
+          ToPort: 2222
+          CidrIp: 0.0.0.0/0
+  Servicessh:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: ssh
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionssh
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupssh
+  LogGroupapi:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionapi]]
+  TaskDefinitionapi:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupapi
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionapi]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: api
+          Command:
+            - ""
+          Image: docker.io/shellhubio/api:${SHELLHUB_VERSION}
+          PortMappings: []
+          Environment:
+            - name: SHELLHUB_VERSION
+              value: ${SHELLHUB_VERSION}
+            - name: PRIVATE_KEY
+              value: /run/secrets/api_private_key
+            - name: PUBLIC_KEY
+              value: /run/secrets/api_public_key
+            - name: SHELLHUB_ENTERPRISE
+              value: ${SHELLHUB_ENTERPRISE}
+            - name: SHELLHUB_BILLING
+              value: ${SHELLHUB_BILLING}
+            - name: SHELLHUB_CLOUD
+              value: ${SHELLHUB_CLOUD}
+            - name: MAXMIND_MIRROR
+              value: ${SHELLHUB_MAXMIND_MIRROR}
+            - name: MAXMIND_LICENSE
+              value: ${SHELLHUB_MAXMIND_LICENSE}
+            - name: TELEMETRY
+              value: ${SHELLHUB_TELEMETRY:-}
+            - name: TELEMETRY_SCHEDULE
+              value: ${SHELLHUB_TELEMETRY_SCHEDULE:-}
+            - name: SHELLHUB_LOG_LEVEL
+              value: ${SHELLHUB_LOG_LEVEL}
+            - name: SHELLHUB_LOG_FORMAT
+              value: ${SHELLHUB_LOG_FORMAT}
+            - name: SENTRY_DSN
+              value: ${SHELLHUB_SENTRY_DSN}
+            - name: SHELLLHUB_ANNOUNCEMENTS
+              value: ${SHELLLHUB_ANNOUNCEMENTS:-}
+            - name: SHELLHUB_SSH_PORT
+              value: ${SHELLHUB_SSH_PORT}
+            - name: SHELLHUB_DOMAIN
+              value: ${SHELLHUB_DOMAIN}
+            - name: ASYNQ_GROUP_MAX_DELAY
+              value: ${SHELLHUB_ASYNQ_GROUP_MAX_DELAY}
+            - name: ASYNQ_GROUP_GRACE_PERIOD
+              value: ${SHELLHUB_ASYNQ_GROUP_GRACE_PERIOD}
+            - name: ASYNQ_GROUP_MAX_SIZE
+              value: ${SHELLHUB_ASYNQ_GROUP_MAX_SIZE}
+            - name: ASYNQ_UNIQUENESS_TIMEOUT
+              value: ${SHELLHUB_ASYNQ_UNIQUENESS_TIMEOUT}
+            - name: REDIS_CACHE_POOL_SIZE
+              value: ${SHELLHUB_REDIS_CACHE_POOL_SIZE}
+            - name: MAXIMUM_ACCOUNT_LOCKOUT
+              value: ${SHELLHUB_MAXIMUM_ACCOUNT_LOCKOUT}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupapi
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupapi:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [api, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceapi:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: api
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionapi
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupapi
+  LogGroupui:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionui]]
+  TaskDefinitionui:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupui
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionui]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: ui
+          Command:
+            - ""
+          Image: docker.io/shellhubio/ui:${SHELLHUB_VERSION}
+          PortMappings: []
+          Environment:
+            - name: SHELLHUB_STRIPE_PUBLISHABLE_KEY
+              value: ${STRIPE_PUBLISHABLE_KEY}
+            - name: SHELLHUB_BILLING
+              value: ${SHELLHUB_BILLING}
+            - name: SHELLHUB_CHATWOOT_WEBSITE_TOKEN
+              value: ${SHELLHUB_CHATWOOT_WEBSITE_TOKEN}
+            - name: SHELLHUB_CHATWOOT_BASEURL
+              value: ${SHELLHUB_CHATWOOT_BASEURL}
+            - name: SHELLHUB_ENTERPRISE
+              value: ${SHELLHUB_ENTERPRISE}
+            - name: SHELLHUB_CLOUD
+              value: ${SHELLHUB_CLOUD}
+            - name: SHELLHUB_ANNOUNCEMENTS
+              value: ${SHELLHUB_ANNOUNCEMENTS}
+            - name: SHELLHUB_VERSION
+              value: ${SHELLHUB_VERSION}
+            - name: SHELLHUB_SENTRY_DSN
+              value: ${SHELLHUB_SENTRY_DSN}
+            - name: SHELLHUB_PAYWALL
+              value: ${SHELLHUB_PAYWALL}
+            - name: SHELLHUB_CONNECTOR
+              value: ${SHELLHUB_CONNECTOR}
+            - name: SHELLHUB_TUNNELS
+              value: ${SHELLHUB_TUNNELS}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupui
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupui:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [ui, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceui:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: ui
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionui
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupui
+  LogGroupgateway:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitiongateway]]
+  TaskDefinitiongateway:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupgateway
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitiongateway]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: gateway
+          Command:
+            - ""
+          Image: docker.io/shellhubio/gateway:${SHELLHUB_VERSION}
+          PortMappings: []
+          Environment:
+            - name: SHELLHUB_DOMAIN
+              value: ${SHELLHUB_DOMAIN}
+            - name: SHELLHUB_TUNNELS
+              value: ${SHELLHUB_TUNNELS}
+            - name: SHELLHUB_VERSION
+              value: ${SHELLHUB_VERSION}
+            - name: SHELLHUB_SSH_PORT
+              value: ${SHELLHUB_SSH_PORT}
+            - name: SHELLHUB_PROXY
+              value: ${SHELLHUB_PROXY}
+            - name: SHELLHUB_ENTERPRISE
+              value: ${SHELLHUB_ENTERPRISE}
+            - name: SHELLHUB_CLOUD
+              value: ${SHELLHUB_CLOUD}
+            - name: SHELLHUB_AUTO_SSL
+              value: ${SHELLHUB_AUTO_SSL}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupgateway
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupgateway:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [gateway, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Servicegateway:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: gateway
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitiongateway
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupgateway
+  LogGroupcli:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitioncli]]
+  TaskDefinitioncli:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupcli
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitioncli]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: cli
+          Command:
+            - /bin/sleep
+            - infinity
+          Image: docker.io/shellhubio/cli:${SHELLHUB_VERSION}
+          PortMappings: []
+          Environment:
+            - name: SHELLHUB_LOG_LEVEL
+              value: ${SHELLHUB_LOG_LEVEL}
+            - name: SHELLHUB_LOG_FORMAT
+              value: ${SHELLHUB_LOG_FORMAT}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupcli
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupcli:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [cli, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Servicecli:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: cli
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitioncli
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupcli
+  LogGroupmongo:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionmongo]]
+  TaskDefinitionmongo:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupmongo
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionmongo]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: mongo
+          Command:
+            - --replSet
+            - rs
+            - --bind_ip_all
+          Image: docker.io/library/mongo:4.4.29
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupmongo
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupmongo:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [mongo, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Servicemongo:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: mongo
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionmongo
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupmongo
+  LogGroupredis:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionredis]]
+  TaskDefinitionredis:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupredis
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionredis]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: redis
+          Command:
+            - redis-server
+            - --appendonly
+            - no
+            - --save
+            - '""'
+          Image: docker.io/library/redis:latest
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupredis
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupredis:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [redis, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []
+  Serviceredis:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: redis
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionredis
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupredis

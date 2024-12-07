@@ -1,0 +1,188 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: ssh
+      image:
+        registry_type: DOCKER_HUB
+        repository: shellhubio/ssh
+        tag: ${SHELLHUB_VERSION}
+      http_port: 2222
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: PRIVATE_KEY
+          value: /run/secrets/ssh_private_key
+        - key: SHELLHUB_ENTERPRISE
+          value: ${SHELLHUB_ENTERPRISE}
+        - key: SHELLHUB_CLOUD
+          value: ${SHELLHUB_CLOUD}
+        - key: SHELLHUB_LOG_LEVEL
+          value: ${SHELLHUB_LOG_LEVEL}
+        - key: SHELLHUB_LOG_FORMAT
+          value: ${SHELLHUB_LOG_FORMAT}
+        - key: SHELLHUB_BILLING
+          value: ${SHELLHUB_BILLING}
+        - key: ALLOW_PUBLIC_KEY_ACCESS_BELLOW_0_6_0
+          value: ${SHELLHUB_ALLOW_PUBLIC_KEY_ACCESS_BELLOW_0_6_0}
+        - key: RECORD_URL
+          value: ${SHELLHUB_RECORD_URL}
+        - key: BILLING_URL
+          value: ${SHELLHUB_BILLING_URL}
+      routes:
+        - path: /
+    - name: api
+      image:
+        registry_type: DOCKER_HUB
+        repository: shellhubio/api
+        tag: ${SHELLHUB_VERSION}
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: SHELLHUB_VERSION
+          value: ${SHELLHUB_VERSION}
+        - key: PRIVATE_KEY
+          value: /run/secrets/api_private_key
+        - key: PUBLIC_KEY
+          value: /run/secrets/api_public_key
+        - key: SHELLHUB_ENTERPRISE
+          value: ${SHELLHUB_ENTERPRISE}
+        - key: SHELLHUB_BILLING
+          value: ${SHELLHUB_BILLING}
+        - key: SHELLHUB_CLOUD
+          value: ${SHELLHUB_CLOUD}
+        - key: MAXMIND_MIRROR
+          value: ${SHELLHUB_MAXMIND_MIRROR}
+        - key: MAXMIND_LICENSE
+          value: ${SHELLHUB_MAXMIND_LICENSE}
+        - key: TELEMETRY
+          value: ${SHELLHUB_TELEMETRY:-}
+        - key: TELEMETRY_SCHEDULE
+          value: ${SHELLHUB_TELEMETRY_SCHEDULE:-}
+        - key: SHELLHUB_LOG_LEVEL
+          value: ${SHELLHUB_LOG_LEVEL}
+        - key: SHELLHUB_LOG_FORMAT
+          value: ${SHELLHUB_LOG_FORMAT}
+        - key: SENTRY_DSN
+          value: ${SHELLHUB_SENTRY_DSN}
+        - key: SHELLLHUB_ANNOUNCEMENTS
+          value: ${SHELLLHUB_ANNOUNCEMENTS:-}
+        - key: SHELLHUB_SSH_PORT
+          value: ${SHELLHUB_SSH_PORT}
+        - key: SHELLHUB_DOMAIN
+          value: ${SHELLHUB_DOMAIN}
+        - key: ASYNQ_GROUP_MAX_DELAY
+          value: ${SHELLHUB_ASYNQ_GROUP_MAX_DELAY}
+        - key: ASYNQ_GROUP_GRACE_PERIOD
+          value: ${SHELLHUB_ASYNQ_GROUP_GRACE_PERIOD}
+        - key: ASYNQ_GROUP_MAX_SIZE
+          value: ${SHELLHUB_ASYNQ_GROUP_MAX_SIZE}
+        - key: ASYNQ_UNIQUENESS_TIMEOUT
+          value: ${SHELLHUB_ASYNQ_UNIQUENESS_TIMEOUT}
+        - key: REDIS_CACHE_POOL_SIZE
+          value: ${SHELLHUB_REDIS_CACHE_POOL_SIZE}
+        - key: MAXIMUM_ACCOUNT_LOCKOUT
+          value: ${SHELLHUB_MAXIMUM_ACCOUNT_LOCKOUT}
+      routes:
+        - path: /api
+    - name: ui
+      image:
+        registry_type: DOCKER_HUB
+        repository: shellhubio/ui
+        tag: ${SHELLHUB_VERSION}
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: SHELLHUB_STRIPE_PUBLISHABLE_KEY
+          value: ${STRIPE_PUBLISHABLE_KEY}
+        - key: SHELLHUB_BILLING
+          value: ${SHELLHUB_BILLING}
+        - key: SHELLHUB_CHATWOOT_WEBSITE_TOKEN
+          value: ${SHELLHUB_CHATWOOT_WEBSITE_TOKEN}
+        - key: SHELLHUB_CHATWOOT_BASEURL
+          value: ${SHELLHUB_CHATWOOT_BASEURL}
+        - key: SHELLHUB_ENTERPRISE
+          value: ${SHELLHUB_ENTERPRISE}
+        - key: SHELLHUB_CLOUD
+          value: ${SHELLHUB_CLOUD}
+        - key: SHELLHUB_ANNOUNCEMENTS
+          value: ${SHELLHUB_ANNOUNCEMENTS}
+        - key: SHELLHUB_VERSION
+          value: ${SHELLHUB_VERSION}
+        - key: SHELLHUB_SENTRY_DSN
+          value: ${SHELLHUB_SENTRY_DSN}
+        - key: SHELLHUB_PAYWALL
+          value: ${SHELLHUB_PAYWALL}
+        - key: SHELLHUB_CONNECTOR
+          value: ${SHELLHUB_CONNECTOR}
+        - key: SHELLHUB_TUNNELS
+          value: ${SHELLHUB_TUNNELS}
+      routes:
+        - path: /ui
+    - name: gateway
+      image:
+        registry_type: DOCKER_HUB
+        repository: shellhubio/gateway
+        tag: ${SHELLHUB_VERSION}
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: SHELLHUB_DOMAIN
+          value: ${SHELLHUB_DOMAIN}
+        - key: SHELLHUB_TUNNELS
+          value: ${SHELLHUB_TUNNELS}
+        - key: SHELLHUB_VERSION
+          value: ${SHELLHUB_VERSION}
+        - key: SHELLHUB_SSH_PORT
+          value: ${SHELLHUB_SSH_PORT}
+        - key: SHELLHUB_PROXY
+          value: ${SHELLHUB_PROXY}
+        - key: SHELLHUB_ENTERPRISE
+          value: ${SHELLHUB_ENTERPRISE}
+        - key: SHELLHUB_CLOUD
+          value: ${SHELLHUB_CLOUD}
+        - key: SHELLHUB_AUTO_SSL
+          value: ${SHELLHUB_AUTO_SSL}
+      routes:
+        - path: /gateway
+    - name: cli
+      image:
+        registry_type: DOCKER_HUB
+        repository: shellhubio/cli
+        tag: ${SHELLHUB_VERSION}
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: /bin/sleep infinity
+      envs:
+        - key: SHELLHUB_LOG_LEVEL
+          value: ${SHELLHUB_LOG_LEVEL}
+        - key: SHELLHUB_LOG_FORMAT
+          value: ${SHELLHUB_LOG_FORMAT}
+      routes:
+        - path: /cli
+    - name: mongo
+      image:
+        registry_type: DOCKER_HUB
+        repository: mongo
+        tag: 4.4.29
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: --replSet rs --bind_ip_all
+      envs: []
+      routes:
+        - path: /mongo
+    - name: redis
+      image:
+        registry_type: DOCKER_HUB
+        repository: redis
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: redis-server --appendonly no --save ""
+      envs: []
+      routes:
+        - path: /redis
