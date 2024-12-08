@@ -25,7 +25,7 @@ This directory contains the following Infrastructure as Code templates:
 
 ## ⚠️ Important Notice
 
-These templates are automatically generated from the source repository's `docker-compose.yml` file using [docker-to-iac](https://github.com/deploystackio/docker-to-iac). While we strive for accuracy, please review the generated templates before deployment.
+These templates are automatically generated from the source repository's `docker-compose.yml` file or `docker run` using [docker-to-iac](https://github.com/deploystackio/docker-to-iac). While we strive for accuracy, please review the generated templates before deployment.
 
 ## 🛠 Usage
 
@@ -41,7 +41,7 @@ Original license: [license_type]
 
 ## 🔄 Updates
 
-These templates are automatically updated when changes are detected in the source repository's `docker-compose.yml` file. You can always get the latest version by visiting [DeployStack.io](https://deploystack.io).
+These templates are automatically updated when changes are detected in the source repository's `docker-compose.yml` file or a new version of `docker run` command has been released. You can always get the latest version by visiting [DeployStack.io](https://deploystack.io).
 
 ## 💬 Need Help?
 
