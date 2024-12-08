@@ -14,7 +14,7 @@ You can explore all available application templates in two ways:
 
 ## ⚡ How It Works
 
-1. **Source**: Each template starts from a `docker-compose.yml` file in a public repository
+1. **Source**: Each template starts from a `docker-compose.yml` file or `docker run` command in/from a public repository or submit to DeployStack
 2. **Generation**: Our [docker-to-iac](https://github.com/deploystackio/docker-to-iac) module transforms it into cloud-specific templates
 3. **Deployment**: Use our one-click deploy buttons to launch on your preferred cloud provider
 
@@ -33,6 +33,7 @@ While templates are automatically generated, we welcome:
 
 Templates are automatically updated when:
 - Source repository's `docker-compose.yml` changes
+- New Run command has been submitted
 - Improvements are made to our generation engine
 - New cloud providers are supported
 
