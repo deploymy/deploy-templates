@@ -1,0 +1,13 @@
+services:
+  - name: noisedash
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/noisedash/noisedash:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "1432"
