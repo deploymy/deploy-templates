@@ -1,0 +1,18 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: default
+      image:
+        registry_type: DOCKER_HUB
+        repository: f0rc3/gokapi
+        tag: latest
+      http_port: 53842
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: TZ
+          value: UTC
+      routes:
+        - path: /
