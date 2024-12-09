@@ -1,0 +1,17 @@
+services:
+  - name: default
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/freshrss/freshrss:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: TZ
+        value: Europe/Paris
+      - key: CRON_MIN
+        value: 1,31
+      - key: PORT
+        value: "80"
