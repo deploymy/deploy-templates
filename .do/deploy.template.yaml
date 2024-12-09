@@ -1,0 +1,16 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: default
+      image:
+        registry_type: DOCKER_HUB
+        repository: b4bz/homer
+        tag: latest
+      http_port: 8080
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /
