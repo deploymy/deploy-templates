@@ -1,0 +1,15 @@
+services:
+  - name: default
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/rook1e404/fusion:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: PASSWORD
+        value: rss123456
+      - key: PORT
+        value: "8080"
