@@ -1,0 +1,15 @@
+services:
+  - name: default
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/baserow/baserow:1.29.3
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: BASEROW_PUBLIC_URL
+        value: http://localhost
+      - key: PORT
+        value: "80"
