@@ -1,0 +1,15 @@
+services:
+  - name: default
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/deluan/navidrome:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: ND_LOGLEVEL
+        value: info
+      - key: PORT
+        value: "4533"
