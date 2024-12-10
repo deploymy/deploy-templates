@@ -1,0 +1,26 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: default
+      image:
+        registry_type: DOCKER_HUB
+        repository: docker.io/miniflux/miniflux
+        tag: latest
+      http_port: 8080
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: postgres://miniflux:*password*@*dbhost*/miniflux?sslmode
+          value: disable
+        - key: RUN_MIGRATIONS
+          value: "1"
+        - key: CREATE_ADMIN
+          value: "1"
+        - key: ADMIN_USERNAME
+          value: "*username*"
+        - key: ADMIN_PASSWORD
+          value: "*password*"
+      routes:
+        - path: /

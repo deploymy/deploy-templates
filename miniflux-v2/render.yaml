@@ -1,0 +1,23 @@
+services:
+  - name: default
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/miniflux/miniflux:latest
+    startCommand: ""
+    plan: free
+    region: oregon
+    envVars:
+      - key: postgres://miniflux:*password*@*dbhost*/miniflux?sslmode
+        value: disable
+      - key: RUN_MIGRATIONS
+        value: "1"
+      - key: CREATE_ADMIN
+        value: "1"
+      - key: ADMIN_USERNAME
+        value: "*username*"
+      - key: ADMIN_PASSWORD
+        value: "*password*"
+      - key: PORT
+        value: "8080"
