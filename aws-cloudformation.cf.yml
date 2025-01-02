@@ -50,13 +50,13 @@ Resources:
           PortMappings: []
           Environment:
             - name: MYSQL_ROOT_PASSWORD
-              value: ${DB_PASSWORD}
+              value: ChangeThisToASecurePassword
             - name: MYSQL_USER
-              value: ${DB_USERNAME}
+              value: linkace
             - name: MYSQL_PASSWORD
-              value: ${DB_PASSWORD}
+              value: ChangeThisToASecurePassword
             - name: MYSQL_DATABASE
-              value: ${DB_DATABASE}
+              value: linkace
           LogConfiguration:
             LogDriver: awslogs
             Options:
