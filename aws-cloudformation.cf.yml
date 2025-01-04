@@ -63,10 +63,6 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-group: !Ref LogGroupdb
               awslogs-stream-prefix: ecs
-          Command:
-            - mariadbd
-            - --character-set-server=utf8mb4
-            - --collation-server=utf8mb4_bin
   ContainerSecurityGroupdb:
     Type: AWS::EC2::SecurityGroup
     Properties:
