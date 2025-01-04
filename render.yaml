@@ -10,11 +10,11 @@ services:
     region: oregon
     envVars:
       - key: MYSQL_ROOT_PASSWORD
-        value: ChangeThisToASecurePassword
+        value: ChangeThisToASecurePassword!
       - key: MYSQL_USER
         value: linkace
       - key: MYSQL_PASSWORD
-        value: ChangeThisToASecurePassword
+        value: ChangeThisToASecurePassword!
       - key: MYSQL_DATABASE
         value: linkace
     disk:
