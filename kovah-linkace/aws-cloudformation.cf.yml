@@ -50,11 +50,11 @@ Resources:
           PortMappings: []
           Environment:
             - name: MYSQL_ROOT_PASSWORD
-              value: ChangeThisToASecurePassword
+              value: ChangeThisToASecurePassword!
             - name: MYSQL_USER
               value: linkace
             - name: MYSQL_PASSWORD
-              value: ChangeThisToASecurePassword
+              value: ChangeThisToASecurePassword!
             - name: MYSQL_DATABASE
               value: linkace
           LogConfiguration:
