@@ -10,7 +10,7 @@ spec:
         tag: "11.2"
       instance_count: 1
       instance_size_slug: basic-xxs
-      run_command: mariadbd --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+      run_command: ""
       envs:
         - key: MYSQL_ROOT_PASSWORD
           value: ChangeThisToASecurePassword!

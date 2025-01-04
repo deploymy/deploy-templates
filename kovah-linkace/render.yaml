@@ -5,7 +5,7 @@ services:
     runtime: image
     image:
       url: docker.io/library/mariadb:11.2
-    startCommand: mariadbd --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    startCommand: ""
     plan: starter
     region: oregon
     envVars:
