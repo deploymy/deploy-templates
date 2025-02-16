@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DeployStack CFN template translated from Docker compose
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+  ServiceName:
+    Type: String
+    Default: DeployStackService
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['', [!Ref ServiceName, Cluster]]
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, ExecutionRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  LogGroupdb:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitiondb]]
+  TaskDefinitiondb:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - LogGroupdb
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitiondb]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: db
+          Image: docker.io/library/mariadb:11.2
+          ReadonlyRootFilesystem: false
+          PortMappings: []
+          Environment:
+            - name: MYSQL_ROOT_PASSWORD
+              value: ChangeThisToASecurePassword!
+            - name: MYSQL_USER
+              value: linkace
+            - name: MYSQL_PASSWORD
+              value: ChangeThisToASecurePassword!
+            - name: MYSQL_DATABASE
+              value: linkace
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupdb
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupdb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [db, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  Servicedb:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: db
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitiondb
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupdb
+  LogGroupapp:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionapp]]
+  TaskDefinitionapp:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - LogGroupapp
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionapp]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: app
+          Image: docker.io/linkace/linkace:simple
+          ReadonlyRootFilesystem: false
+          PortMappings:
+            - ContainerPort: 80
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupapp
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupapp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [app, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  Serviceapp:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: app
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionapp
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupapp

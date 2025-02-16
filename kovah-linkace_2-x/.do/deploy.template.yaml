@@ -1,0 +1,39 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: db
+      image:
+        registry_type: DOCKER_HUB
+        registry: library
+        repository: mariadb
+        tag: "11.2"
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: MYSQL_ROOT_PASSWORD
+          value: ChangeThisToASecurePassword!
+        - key: MYSQL_USER
+          value: linkace
+        - key: MYSQL_PASSWORD
+          value: ChangeThisToASecurePassword!
+        - key: MYSQL_DATABASE
+          value: linkace
+      health_check:
+        port: 3306
+      internal_ports:
+        - 3306
+    - name: app
+      image:
+        registry_type: DOCKER_HUB
+        registry: linkace
+        repository: linkace
+        tag: simple
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      http_port: 80
+      routes:
+        - path: /

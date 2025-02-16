@@ -1,0 +1,39 @@
+services:
+  - name: db
+    type: pserv
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/mariadb:11.2
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        value: ChangeThisToASecurePassword!
+      - key: MYSQL_USER
+        value: linkace
+      - key: MYSQL_PASSWORD
+        value: ChangeThisToASecurePassword!
+      - key: MYSQL_DATABASE
+        value: linkace
+    disk:
+      name: db-var-lib-mysql
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+  - name: app
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/linkace/linkace:simple
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "80"
+    disk:
+      name: app-app-storage-app-backups
+      mountPath: /app/storage/app/backups
+      sizeGB: 10
