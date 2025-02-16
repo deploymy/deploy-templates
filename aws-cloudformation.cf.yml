@@ -107,7 +107,7 @@ Resources:
       ExecutionRoleArn: !Ref ExecutionRole
       ContainerDefinitions:
         - Name: app
-          Image: docker.io/linkace/linkace:simple
+          Image: docker.io/linkace/linkace:latest
           ReadonlyRootFilesystem: false
           PortMappings:
             - ContainerPort: 80

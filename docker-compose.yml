@@ -16,15 +16,14 @@ services:
 
   # --- LinkAce Image with PHP and nginx
   app:
-    image: docker.io/linkace/linkace:simple
+    image: docker.io/linkace/linkace
     restart: unless-stopped
     depends_on:
       - db
     ports:
       - "0.0.0.0:80:80"
-      #- "0.0.0.0:443:443"
     volumes:
-      - ./backups:/app/storage/app/backups    
+      - ./backups:/app/storage/app/backups
       - linkace_logs:/app/storage/logs
 
 volumes:
