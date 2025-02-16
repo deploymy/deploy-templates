@@ -26,7 +26,7 @@ services:
     env: docker
     runtime: image
     image:
-      url: docker.io/linkace/linkace:simple
+      url: docker.io/linkace/linkace:latest
     startCommand: ""
     plan: starter
     region: oregon
