@@ -6,9 +6,9 @@
 
 | Cloud Provider | Deploy Button |
 |---------------|---------------|
-| AWS | <a href="https://deploystack.io/deploy/kovah-linkace?branch=kovah-linkace_2-x&provider=aws&language=cfn"><img src="https://github.com/htdio-stg/deploy-templates/blob/main/.assets/img/aws.svg" height="38"></a> |
-| DigitalOcean | <a href="https://deploystack.io/deploy/kovah-linkace?branch=kovah-linkace_2-x&provider=do&language=dop"><img src="https://github.com/htdio-stg/deploy-templates/blob/main/.assets/img/do.svg" height="38"></a> |
-| Render | <a href="https://deploystack.io/deploy/kovah-linkace?branch=kovah-linkace_2-x&provider=rnd&language=rnd"><img src="https://github.com/htdio-stg/deploy-templates/blob/main/.assets/img/rnd.svg" height="38"></a> |
+| AWS | <a href="https://deploystack.io/deploy/kovah-linkace?provider=aws&language=cfn"><img src="https://github.com/htdio-stg/deploy-templates/blob/main/.assets/img/aws.svg" height="38"></a> |
+| DigitalOcean | <a href="https://deploystack.io/deploy/kovah-linkace?provider=do&language=dop"><img src="https://github.com/htdio-stg/deploy-templates/blob/main/.assets/img/do.svg" height="38"></a> |
+| Render | <a href="https://deploystack.io/deploy/kovah-linkace?provider=rnd&language=rnd"><img src="https://github.com/htdio-stg/deploy-templates/blob/main/.assets/img/rnd.svg" height="38"></a> |
 
 ## 📦 What's Inside
 
