@@ -1,0 +1,25 @@
+services:
+  - name: webarchive
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: ghcr.io/derfenix/webarchive:latest
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: LOGGING_DEBUG
+        value: "true"
+      - key: API_ADDRESS
+        value: 0.0.0.0:5001
+      - key: PDF_DPI
+        value: "300"
+      - key: DB_PATH
+        value: /db
+      - key: PORT
+        value: "5001"
+    disk:
+      name: webarchive-db
+      mountPath: /db
+      sizeGB: 10
