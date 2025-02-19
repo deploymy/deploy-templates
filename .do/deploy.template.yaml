@@ -1,0 +1,25 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: webarchive
+      image:
+        registry_type: GHCR
+        registry: ghcr.io
+        repository: derfenix/webarchive
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: LOGGING_DEBUG
+          value: "true"
+        - key: API_ADDRESS
+          value: 0.0.0.0:5001
+        - key: PDF_DPI
+          value: "300"
+        - key: DB_PATH
+          value: /db
+      http_port: 5001
+      routes:
+        - path: /
