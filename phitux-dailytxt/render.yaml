@@ -6,13 +6,13 @@ services:
     image:
       url: docker.io/phitux/dailytxt:latest
     startCommand: ""
-    plan: free
+    plan: starter
     region: oregon
     envVars:
       - key: PORT
-        value: "127"
-      - key: SECRET_KEY
-        value: <openssl rand -base64 32>
+        value: "8765"
+      - key: '"GdLCAOaP1Km4Mwc2cViNUc4BpnNbZJyBmkCeFw2Uyp4'
+        value: '"'
       - key: ALLOW_REGISTRATION
         value: "True"
       - key: DATA_INDENT
@@ -21,3 +21,7 @@ services:
         value: "60"
       - key: ENABLE_UPDATE_CHECK
         value: "True"
+    disk:
+      name: dailytxt-app-data-
+      mountPath: /app/data/
+      sizeGB: 10

@@ -5,17 +5,17 @@ spec:
     - name: dailytxt
       image:
         registry_type: DOCKER_HUB
-        repository: phitux/dailytxt
+        registry: phitux
+        repository: dailytxt
         tag: latest
-      http_port: 127
       instance_count: 1
       instance_size_slug: basic-xxs
       run_command: ""
       envs:
         - key: PORT
           value: "8765"
-        - key: SECRET_KEY
-          value: <openssl rand -base64 32>
+        - key: '"GdLCAOaP1Km4Mwc2cViNUc4BpnNbZJyBmkCeFw2Uyp4'
+          value: '"'
         - key: ALLOW_REGISTRATION
           value: "True"
         - key: DATA_INDENT
@@ -24,5 +24,6 @@ spec:
           value: "60"
         - key: ENABLE_UPDATE_CHECK
           value: "True"
+      http_port: 8765
       routes:
         - path: /

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Deplo.my CFN template translated from Docker compose
+Description: DeployStack CFN template translated from Docker compose
 Parameters:
   VPC:
     Type: AWS::EC2::VPC::Id
@@ -27,23 +27,14 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-  TaskRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Join ['', [!Ref ServiceName, TaskRole]]
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
   LogGroupdailytxt:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitiondailytxt]]
   TaskDefinitiondailytxt:
     Type: AWS::ECS::TaskDefinition
-    DependsOn: LogGroupdailytxt
+    DependsOn:
+      - LogGroupdailytxt
     Properties:
       Family: !Join ['', [!Ref ServiceName, TaskDefinitiondailytxt]]
       NetworkMode: awsvpc
@@ -52,19 +43,17 @@ Resources:
       Cpu: 512
       Memory: 1GB
       ExecutionRoleArn: !Ref ExecutionRole
-      TaskRoleArn: !Ref TaskRole
       ContainerDefinitions:
         - Name: dailytxt
-          Command:
-            - ""
           Image: docker.io/phitux/dailytxt:latest
+          ReadonlyRootFilesystem: false
           PortMappings:
-            - ContainerPort: 127
+            - ContainerPort: 8765
           Environment:
             - name: PORT
               value: "8765"
-            - name: SECRET_KEY
-              value: <openssl rand -base64 32>
+            - name: '"GdLCAOaP1Km4Mwc2cViNUc4BpnNbZJyBmkCeFw2Uyp4'
+              value: '"'
             - name: ALLOW_REGISTRATION
               value: "True"
             - name: DATA_INDENT
@@ -85,10 +74,10 @@ Resources:
       GroupDescription: !Join ['', [dailytxt, ContainerSecurityGroup]]
       VpcId: !Ref VPC
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 127
-          ToPort: 127
-          CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
   Servicedailytxt:
     Type: AWS::ECS::Service
     Properties:
