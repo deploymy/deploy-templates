@@ -52,8 +52,8 @@ Resources:
           Environment:
             - name: PORT
               value: "8765"
-            - name: '"GdLCAOaP1Km4Mwc2cViNUc4BpnNbZJyBmkCeFw2Uyp4'
-              value: '"'
+            - name: SECRET_KEY
+              value: GdLCAOaP1Km4Mwc2cViNUc4BpnNbZJyBmkCeFw2Uyp4=
             - name: ALLOW_REGISTRATION
               value: "True"
             - name: DATA_INDENT
