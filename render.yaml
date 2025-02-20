@@ -11,8 +11,8 @@ services:
     envVars:
       - key: PORT
         value: "8765"
-      - key: '"GdLCAOaP1Km4Mwc2cViNUc4BpnNbZJyBmkCeFw2Uyp4'
-        value: '"'
+      - key: SECRET_KEY
+        value: GdLCAOaP1Km4Mwc2cViNUc4BpnNbZJyBmkCeFw2Uyp4=
       - key: ALLOW_REGISTRATION
         value: "True"
       - key: DATA_INDENT
