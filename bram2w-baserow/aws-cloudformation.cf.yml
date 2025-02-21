@@ -45,7 +45,7 @@ Resources:
       ExecutionRoleArn: !Ref ExecutionRole
       ContainerDefinitions:
         - Name: default
-          Image: docker.io/baserow/baserow:1.29.3
+          Image: docker.io/baserow/baserow:latest
           ReadonlyRootFilesystem: false
           PortMappings:
             - ContainerPort: 80
@@ -53,6 +53,8 @@ Resources:
           Environment:
             - name: BASEROW_PUBLIC_URL
               value: http://localhost
+            - name: DISABLE_VOLUME_CHECK
+              value: yes
           LogConfiguration:
             LogDriver: awslogs
             Options:

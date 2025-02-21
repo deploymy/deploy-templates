@@ -4,16 +4,14 @@ services:
     env: docker
     runtime: image
     image:
-      url: docker.io/baserow/baserow:1.29.3
+      url: docker.io/baserow/baserow:latest
     startCommand: ""
     plan: starter
     region: oregon
     envVars:
       - key: BASEROW_PUBLIC_URL
         value: http://localhost
+      - key: DISABLE_VOLUME_CHECK
+        value: yes
       - key: PORT
         value: "80"
-    disk:
-      name: default-baserow-data
-      mountPath: /baserow/data
-      sizeGB: 10

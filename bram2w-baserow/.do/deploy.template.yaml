@@ -7,13 +7,15 @@ spec:
         registry_type: DOCKER_HUB
         registry: baserow
         repository: baserow
-        tag: 1.29.3
+        tag: latest
       instance_count: 1
       instance_size_slug: basic-xxs
       run_command: ""
       envs:
         - key: BASEROW_PUBLIC_URL
           value: http://localhost
+        - key: DISABLE_VOLUME_CHECK
+          value: yes
       http_port: 80
       routes:
         - path: /
