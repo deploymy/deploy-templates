@@ -6,10 +6,14 @@ services:
     image:
       url: docker.io/baserow/baserow:1.29.3
     startCommand: ""
-    plan: free
+    plan: starter
     region: oregon
     envVars:
       - key: BASEROW_PUBLIC_URL
         value: http://localhost
       - key: PORT
         value: "80"
+    disk:
+      name: default-baserow-data
+      mountPath: /baserow/data
+      sizeGB: 10

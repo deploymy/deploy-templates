@@ -5,14 +5,15 @@ spec:
     - name: default
       image:
         registry_type: DOCKER_HUB
-        repository: baserow/baserow
+        registry: baserow
+        repository: baserow
         tag: 1.29.3
-      http_port: 80
       instance_count: 1
       instance_size_slug: basic-xxs
       run_command: ""
       envs:
         - key: BASEROW_PUBLIC_URL
           value: http://localhost
+      http_port: 80
       routes:
         - path: /
