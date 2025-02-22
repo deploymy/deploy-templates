@@ -19,41 +19,9 @@ spec:
         - key: FATHOM_DEBUG
           value: "false"
         - key: FATHOM_DATABASE_DRIVER
-          value: mysql
-        - key: FATHOM_DATABASE_NAME
-          value: fathom
-        - key: FATHOM_DATABASE_USER
-          value: fathom
-        - key: FATHOM_DATABASE_PASSWORD
-          value: password01
-        - key: FATHOM_DATABASE_HOST
-          value: mysql:3306
+          value: sqlite3
         - key: FATHOM_SECRET
           value: TWEn6GXQDx45PZfmJWvyGpXf5M8b94bszgw8JcJWEd6WxgrnUkLatS34GwjPTvZb
       http_port: 8080
       routes:
         - path: /
-    - name: mysql
-      image:
-        registry_type: DOCKER_HUB
-        registry: library
-        repository: mysql
-        tag: "5"
-      instance_count: 1
-      instance_size_slug: basic-xxs
-      run_command: ""
-      envs:
-        - key: MYSQL_ALLOW_EMPTY_PASSWORD
-          value: "false"
-        - key: MYSQL_DATABASE
-          value: fathom
-        - key: MYSQL_PASSWORD
-          value: password01
-        - key: MYSQL_ROOT_PASSWORD
-          value: password01
-        - key: MYSQL_USER
-          value: fathom
-      health_check:
-        port: 3306
-      internal_ports:
-        - 3306
