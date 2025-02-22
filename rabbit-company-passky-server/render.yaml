@@ -10,11 +10,11 @@ services:
     region: oregon
     envVars:
       - key: ADMIN_USERNAME
-        value: ""
+        value: admin
       - key: ADMIN_PASSWORD
-        value: ""
+        value: admin_password
       - key: DATABASE_ENGINE
-        value: ""
+        value: sqlite
       - key: PORT
         value: "80"
     disk:

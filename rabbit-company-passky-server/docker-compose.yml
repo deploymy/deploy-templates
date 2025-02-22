@@ -5,9 +5,9 @@ services:
     image: 'rabbitcompany/passky-server:latest'
     restart: unless-stopped
     environment:
-      - ADMIN_USERNAME=""
-      - ADMIN_PASSWORD=""
-      - DATABASE_ENGINE
+      - ADMIN_USERNAME="admin"
+      - ADMIN_PASSWORD="admin_password"
+      - DATABASE_ENGINE="sqlite"
     ports:
       - 8080:80
     volumes:
