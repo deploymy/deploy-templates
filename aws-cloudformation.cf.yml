@@ -51,11 +51,11 @@ Resources:
             - ContainerPort: 80
           Environment:
             - name: ADMIN_USERNAME
-              value: ""
+              value: admin
             - name: ADMIN_PASSWORD
-              value: ""
+              value: admin_password
             - name: DATABASE_ENGINE
-              value: ""
+              value: sqlite
           LogConfiguration:
             LogDriver: awslogs
             Options:
