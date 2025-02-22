@@ -1,0 +1,121 @@
+services:
+  - name: passky-server
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/rabbitcompany/passky-server:latest
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: SERVER_LOCATION
+        value: ""
+      - key: SERVER_CORES
+        value: ""
+      - key: ADMIN_USERNAME
+        value: ""
+      - key: ADMIN_PASSWORD
+        value: ""
+      - key: CF_TURNSTILE_SITE_KEY
+        value: ""
+      - key: CF_TURNSTILE_SECRET_KEY
+        value: ""
+      - key: DATABASE_ENGINE
+        value: ""
+      - key: DATABASE_FILE
+        value: ""
+      - key: MYSQL_HOST
+        value: ""
+      - key: MYSQL_PORT
+        value: ""
+      - key: MYSQL_DATABASE
+        value: ""
+      - key: MYSQL_USER
+        value: ""
+      - key: MYSQL_PASSWORD
+        value: ""
+      - key: MYSQL_SSL
+        value: ""
+      - key: MYSQL_SSL_CA
+        value: ""
+      - key: MYSQL_CACHE_MODE
+        value: ""
+      - key: REDIS_HOST
+        value: ""
+      - key: REDIS_PORT
+        value: ""
+      - key: REDIS_PASSWORD
+        value: ""
+      - key: REDIS_LOCAL_HOST
+        value: ""
+      - key: REDIS_LOCAL_PORT
+        value: ""
+      - key: REDIS_LOCAL_PASSWORD
+        value: ""
+      - key: MAIL_ENABLED
+        value: ""
+      - key: MAIL_HOST
+        value: ""
+      - key: MAIL_PORT
+        value: ""
+      - key: MAIL_USERNAME
+        value: ""
+      - key: MAIL_PASSWORD
+        value: ""
+      - key: MAIL_USE_TLS
+        value: ""
+      - key: ACCOUNT_MAX
+        value: ""
+      - key: ACCOUNT_MAX_PASSWORDS
+        value: ""
+      - key: ACCOUNT_PREMIUM
+        value: ""
+      - key: YUBI_CLOUD
+        value: ""
+      - key: YUBI_ID
+        value: ""
+      - key: LIMITER_ENABLED
+        value: ""
+      - key: LIMITER_GET_INFO
+        value: ""
+      - key: LIMITER_GET_STATS
+        value: ""
+      - key: LIMITER_GET_TOKEN
+        value: ""
+      - key: LIMITER_GET_PASSWORDS
+        value: ""
+      - key: LIMITER_SAVE_PASSWORD
+        value: ""
+      - key: LIMITER_EDIT_PASSWORD
+        value: ""
+      - key: LIMITER_DELETE_PASSWORD
+        value: ""
+      - key: LIMITER_DELETE_PASSWORDS
+        value: ""
+      - key: LIMITER_CREATE_ACCOUNT
+        value: ""
+      - key: LIMITER_DELETE_ACCOUNT
+        value: ""
+      - key: LIMITER_IMPORT_PASSWORDS
+        value: ""
+      - key: LIMITER_FORGOT_USERNAME
+        value: ""
+      - key: LIMITER_ENABLE_2FA
+        value: ""
+      - key: LIMITER_DISABLE_2FA
+        value: ""
+      - key: LIMITER_ADD_YUBIKEY
+        value: ""
+      - key: LIMITER_REMOVE_YUBIKEY
+        value: ""
+      - key: LIMITER_UPGRADE_ACCOUNT
+        value: ""
+      - key: LIMITER_GET_REPORT
+        value: ""
+      - key: PORT
+        value: "80"
+    disk:
+      name: passky-server-var-www-html-databases
+      mountPath: /var/www/html/databases
+      sizeGB: 10
