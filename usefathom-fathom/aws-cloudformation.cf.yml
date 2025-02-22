@@ -1,0 +1,167 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DeployStack CFN template translated from Docker compose
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+  ServiceName:
+    Type: String
+    Default: DeployStackService
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['', [!Ref ServiceName, Cluster]]
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, ExecutionRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  LogGroupfathom:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionfathom]]
+  TaskDefinitionfathom:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - LogGroupfathom
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionfathom]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: fathom
+          Image: docker.io/usefathom/fathom:latest
+          ReadonlyRootFilesystem: false
+          PortMappings:
+            - ContainerPort: 8080
+          Environment:
+            - name: FATHOM_SERVER_ADDR
+              value: :8080
+            - name: FATHOM_GZIP
+              value: "true"
+            - name: FATHOM_DEBUG
+              value: "false"
+            - name: FATHOM_DATABASE_DRIVER
+              value: mysql
+            - name: FATHOM_DATABASE_NAME
+              value: fathom
+            - name: FATHOM_DATABASE_USER
+              value: fathom
+            - name: FATHOM_DATABASE_PASSWORD
+              value: password01
+            - name: FATHOM_DATABASE_HOST
+              value: mysql:3306
+            - name: FATHOM_SECRET
+              value: TWEn6GXQDx45PZfmJWvyGpXf5M8b94bszgw8JcJWEd6WxgrnUkLatS34GwjPTvZb
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupfathom
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupfathom:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [fathom, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  Servicefathom:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: fathom
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionfathom
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupfathom
+  LogGroupmysql:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionmysql]]
+  TaskDefinitionmysql:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - LogGroupmysql
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionmysql]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: mysql
+          Image: docker.io/library/mysql:5
+          ReadonlyRootFilesystem: false
+          PortMappings:
+            - ContainerPort: 3306
+          Environment:
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: "false"
+            - name: MYSQL_DATABASE
+              value: fathom
+            - name: MYSQL_PASSWORD
+              value: password01
+            - name: MYSQL_ROOT_PASSWORD
+              value: password01
+            - name: MYSQL_USER
+              value: fathom
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupmysql
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupmysql:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [mysql, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  Servicemysql:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: mysql
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionmysql
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupmysql

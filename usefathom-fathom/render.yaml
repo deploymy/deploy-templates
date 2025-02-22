@@ -1,0 +1,57 @@
+services:
+  - name: fathom
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/usefathom/fathom:latest
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: FATHOM_SERVER_ADDR
+        value: :8080
+      - key: FATHOM_GZIP
+        value: "true"
+      - key: FATHOM_DEBUG
+        value: "false"
+      - key: FATHOM_DATABASE_DRIVER
+        value: mysql
+      - key: FATHOM_DATABASE_NAME
+        value: fathom
+      - key: FATHOM_DATABASE_USER
+        value: fathom
+      - key: FATHOM_DATABASE_PASSWORD
+        value: password01
+      - key: FATHOM_DATABASE_HOST
+        value: mysql:3306
+      - key: FATHOM_SECRET
+        value: TWEn6GXQDx45PZfmJWvyGpXf5M8b94bszgw8JcJWEd6WxgrnUkLatS34GwjPTvZb
+      - key: PORT
+        value: "8080"
+  - name: mysql
+    type: pserv
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/library/mysql:5
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: MYSQL_ALLOW_EMPTY_PASSWORD
+        value: "false"
+      - key: MYSQL_DATABASE
+        value: fathom
+      - key: MYSQL_PASSWORD
+        value: password01
+      - key: MYSQL_ROOT_PASSWORD
+        value: password01
+      - key: MYSQL_USER
+        value: fathom
+      - key: PORT
+        value: "3306"
+    disk:
+      name: mysql-var-lib-mysql
+      mountPath: /var/lib/mysql
+      sizeGB: 10
