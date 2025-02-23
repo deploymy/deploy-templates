@@ -1,0 +1,1 @@
+docker run -d --name cockpit -v ./storage:/storage -p 8080:80 cockpithq/cockpit:pro-latest

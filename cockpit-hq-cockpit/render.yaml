@@ -1,0 +1,17 @@
+services:
+  - name: default
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/cockpithq/cockpit:pro-latest
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "80"
+    disk:
+      name: default-storage
+      mountPath: /storage
+      sizeGB: 10
