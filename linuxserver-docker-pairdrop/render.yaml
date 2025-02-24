@@ -1,0 +1,19 @@
+services:
+  - name: default
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/linuxserver/pairdrop:latest
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: PUID
+        value: "1000"
+      - key: PGID
+        value: "1000"
+      - key: TZ
+        value: Etc/UTC
+      - key: PORT
+        value: "3000"
