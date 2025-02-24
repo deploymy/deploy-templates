@@ -1,0 +1,1 @@
+docker run --name idcard --restart always -p 8080:8080 -d pengpan/idcard:latest
