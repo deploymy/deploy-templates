@@ -1,0 +1,17 @@
+services:
+  - name: default
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/structurizr/lite:latest
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "8080"
+    disk:
+      name: default-usr-local-structurizr
+      mountPath: /usr/local/structurizr
+      sizeGB: 10
