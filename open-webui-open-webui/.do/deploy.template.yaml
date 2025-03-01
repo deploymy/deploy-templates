@@ -1,0 +1,33 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: ollama
+      image:
+        registry_type: DOCKER_HUB
+        registry: ollama
+        repository: ollama
+        tag: ${OLLAMA_DOCKER_TAG-latest}
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      routes:
+        - path: /
+    - name: open-webui
+      image:
+        registry_type: GHCR
+        registry: ghcr.io
+        repository: open-webui/open-webui
+        tag: ${WEBUI_DOCKER_TAG-main}
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: OLLAMA_BASE_URL
+          value: http://ollama:11434
+        - key: WEBUI_SECRET_KEY
+          value: ""
+      http_port: 8080
+      routes:
+        - path: /open-webui

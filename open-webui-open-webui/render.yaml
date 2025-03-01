@@ -1,0 +1,35 @@
+services:
+  - name: ollama
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/ollama/ollama:${OLLAMA_DOCKER_TAG-latest}
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars: []
+    disk:
+      name: ollama-root--ollama
+      mountPath: /root/.ollama
+      sizeGB: 10
+  - name: open-webui
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: OLLAMA_BASE_URL
+        value: http://ollama:11434
+      - key: WEBUI_SECRET_KEY
+        value: ""
+      - key: PORT
+        value: "8080"
+    disk:
+      name: open-webui-app-backend-data
+      mountPath: /app/backend/data
+      sizeGB: 10
