@@ -1,0 +1,17 @@
+services:
+  - name: default
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/ollama/ollama:latest
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "11434"
+    disk:
+      name: default-root--ollama
+      mountPath: /root/.ollama
+      sizeGB: 10
