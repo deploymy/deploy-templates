@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DeployStack CFN template translated from Docker compose
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+  ServiceName:
+    Type: String
+    Default: DeployStackService
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['', [!Ref ServiceName, Cluster]]
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, ExecutionRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  LogGroupollama:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionollama]]
+  TaskDefinitionollama:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - LogGroupollama
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionollama]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: ollama
+          Image: docker.io/ollama/ollama:${OLLAMA_DOCKER_TAG-latest}
+          ReadonlyRootFilesystem: false
+          PortMappings: []
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupollama
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupollama:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [ollama, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  Serviceollama:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: ollama
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionollama
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupollama
+  LogGroupopen-webui:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionopen-webui]]
+  TaskDefinitionopen-webui:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - LogGroupopen-webui
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionopen-webui]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: open-webui
+          Image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
+          ReadonlyRootFilesystem: false
+          PortMappings:
+            - ContainerPort: 8080
+          Environment:
+            - name: OLLAMA_BASE_URL
+              value: http://ollama:11434
+            - name: WEBUI_SECRET_KEY
+              value: ""
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupopen-webui
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupopen-webui:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [open-webui, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  Serviceopen-webui:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: open-webui
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionopen-webui
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupopen-webui
