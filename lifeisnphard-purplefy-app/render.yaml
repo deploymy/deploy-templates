@@ -1,0 +1,69 @@
+services:
+  - name: app
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: ghcr.io/lifeisnphard/purplefy-app:purplewear
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: WORDPRESS_DB_HOST
+        value: mariadb
+      - key: WORDPRESS_DB_USER
+        value: ${DB_USER}
+      - key: WORDPRESS_DB_PASSWORD
+        value: ${DB_PASSWORD}
+      - key: WORDPRESS_DB_NAME
+        value: ${DB_NAME}
+      - key: WORDPRESS_CONFIG_EXTRA
+        value: |-
+          # Disable plugin and theme update and installation
+          define( 'DISALLOW_FILE_MODS', true );
+          # Disable automatic updates
+          define( 'AUTOMATIC_UPDATER_DISABLED', true );
+    disk:
+      name: app-var-www-html
+      mountPath: /var/www/html
+      sizeGB: 10
+  - name: nginx
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/chainguard/nginx:latest
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: PORT
+        value: "8080"
+    disk:
+      name: nginx-var-www-html
+      mountPath: /var/www/html
+      sizeGB: 10
+  - name: mariadb
+    type: web
+    env: docker
+    runtime: image
+    image:
+      url: docker.io/chainguard/mariadb:latest
+    startCommand: ""
+    plan: starter
+    region: oregon
+    envVars:
+      - key: MARIADB_ALLOW_EMPTY_ROOT_PASSWORD
+        value: "1"
+      - key: MARIADB_USER
+        value: ${DB_USER}
+      - key: MARIADB_PASSWORD
+        value: ${DB_PASSWORD}
+      - key: MARIADB_DATABASE
+        value: ${DB_NAME}
+      - key: PORT
+        value: "3306"
+    disk:
+      name: mariadb-var-lib-mysql
+      mountPath: /var/lib/mysql
+      sizeGB: 10
