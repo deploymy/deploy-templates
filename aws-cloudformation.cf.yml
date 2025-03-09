@@ -1,0 +1,215 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Generated from container configuration by docker-to-iac
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+  ServiceName:
+    Type: String
+    Default: DeployStackService
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['', [!Ref ServiceName, Cluster]]
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [!Ref ServiceName, ExecutionRole]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  LogGroupapp:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionapp]]
+  TaskDefinitionapp:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - LogGroupapp
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionapp]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: app
+          Image: ghcr.io/lifeisnphard/purplefy-app:purplewear
+          ReadonlyRootFilesystem: false
+          PortMappings: []
+          Environment:
+            - name: WORDPRESS_DB_HOST
+              value: mariadb
+            - name: WORDPRESS_DB_USER
+              value: ${DB_USER}
+            - name: WORDPRESS_DB_PASSWORD
+              value: ${DB_PASSWORD}
+            - name: WORDPRESS_DB_NAME
+              value: ${DB_NAME}
+            - name: WORDPRESS_CONFIG_EXTRA
+              value: |-
+                # Disable plugin and theme update and installation
+                define( 'DISALLOW_FILE_MODS', true );
+                # Disable automatic updates
+                define( 'AUTOMATIC_UPDATER_DISABLED', true );
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupapp
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupapp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [app, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  Serviceapp:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: app
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionapp
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupapp
+  LogGroupnginx:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionnginx]]
+  TaskDefinitionnginx:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - LogGroupnginx
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionnginx]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: nginx
+          Image: docker.io/chainguard/nginx:latest
+          ReadonlyRootFilesystem: false
+          PortMappings:
+            - ContainerPort: 8080
+          Environment: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupnginx
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupnginx:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [nginx, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  Servicenginx:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: nginx
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionnginx
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupnginx
+  LogGroupmariadb:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/, !Ref ServiceName, TaskDefinitionmariadb]]
+  TaskDefinitionmariadb:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - LogGroupmariadb
+    Properties:
+      Family: !Join ['', [!Ref ServiceName, TaskDefinitionmariadb]]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: mariadb
+          Image: docker.io/chainguard/mariadb:latest
+          ReadonlyRootFilesystem: false
+          PortMappings:
+            - ContainerPort: 3306
+          Environment:
+            - name: MARIADB_ALLOW_EMPTY_ROOT_PASSWORD
+              value: "1"
+            - name: MARIADB_USER
+              value: ${DB_USER}
+            - name: MARIADB_PASSWORD
+              value: ${DB_PASSWORD}
+            - name: MARIADB_DATABASE
+              value: ${DB_NAME}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroupmariadb
+              awslogs-stream-prefix: ecs
+  ContainerSecurityGroupmariadb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ['', [mariadb, ContainerSecurityGroup]]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+  Servicemariadb:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: mariadb
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionmariadb
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetA
+            - !Ref SubnetB
+          SecurityGroups:
+            - !Ref ContainerSecurityGroupmariadb

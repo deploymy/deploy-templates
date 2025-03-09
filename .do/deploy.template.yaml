@@ -1,0 +1,64 @@
+spec:
+  name: deploystack
+  region: nyc
+  services:
+    - name: app
+      image:
+        registry_type: GHCR
+        registry: ghcr.io
+        repository: lifeisnphard/purplefy-app
+        tag: purplewear
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: WORDPRESS_DB_HOST
+          value: mariadb
+        - key: WORDPRESS_DB_USER
+          value: ${DB_USER}
+        - key: WORDPRESS_DB_PASSWORD
+          value: ${DB_PASSWORD}
+        - key: WORDPRESS_DB_NAME
+          value: ${DB_NAME}
+        - key: WORDPRESS_CONFIG_EXTRA
+          value: |-
+            # Disable plugin and theme update and installation
+            define( 'DISALLOW_FILE_MODS', true );
+            # Disable automatic updates
+            define( 'AUTOMATIC_UPDATER_DISABLED', true );
+      routes:
+        - path: /
+    - name: nginx
+      image:
+        registry_type: DOCKER_HUB
+        registry: cgr.dev
+        repository: chainguard/nginx
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs: []
+      http_port: 8080
+      routes:
+        - path: /nginx
+    - name: mariadb
+      image:
+        registry_type: DOCKER_HUB
+        registry: cgr.dev
+        repository: chainguard/mariadb
+        tag: latest
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      run_command: ""
+      envs:
+        - key: MARIADB_ALLOW_EMPTY_ROOT_PASSWORD
+          value: "1"
+        - key: MARIADB_USER
+          value: ${DB_USER}
+        - key: MARIADB_PASSWORD
+          value: ${DB_PASSWORD}
+        - key: MARIADB_DATABASE
+          value: ${DB_NAME}
+      http_port: 3306
+      routes:
+        - path: /mariadb

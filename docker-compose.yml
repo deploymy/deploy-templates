@@ -1,0 +1,49 @@
+services:
+  app:
+    image: ghcr.io/lifeisnphard/purplefy-app:purplewear
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        WP_ENV: ${WP_ENV:-development}
+    restart: 'no'
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_CONFIG_EXTRA: |
+        # Disable plugin and theme update and installation
+        define( 'DISALLOW_FILE_MODS', true );
+        # Disable automatic updates
+        define( 'AUTOMATIC_UPDATER_DISABLED', true );        
+    volumes:
+      - 'document-root:/var/www/html'
+
+  nginx:
+    image: cgr.dev/chainguard/nginx:latest
+    restart: 'no'
+    ports:
+      - '8080:8080'
+    volumes:
+      - 'document-root:/var/www/html'
+      - './.docker/nginx/default.conf:/etc/nginx/nginx.conf'
+
+  mariadb:
+    image: cgr.dev/chainguard/mariadb:latest
+    restart: 'no'
+    environment:
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 1
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+    ports:
+      - '3306:3306'
+    volumes:
+      - 'db-data:/var/lib/mysql'
+
+volumes:
+  document-root:
+    driver: local
+  db-data:
+    driver: local
